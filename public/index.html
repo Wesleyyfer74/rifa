@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Landing page oficial da Rifa Do Cipriano. Escolha seus números da sorte e concorra a prêmios incríveis.">
+  <title>Rifa Do Cipriano</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#inicio" aria-label="Rifa Do Cipriano">Rifa Do Cipriano</a>
+
+    <nav class="main-nav" aria-label="Menu principal">
+      <a class="active" href="#inicio">Início</a>
+      <a href="#rifas">Rifas Ativas</a>
+      <a href="#titulos">Meus Títulos</a>
+      <a href="#como-funciona">Como Funciona</a>
+      <a href="#contato">Contato</a>
+    </nav>
+
+    <div class="header-actions">
+      <a class="account-link" href="#contato">Minha Conta</a>
+      <a class="cart-link" href="#numeros" aria-label="Números selecionados">
+        <span>0</span>
+      </a>
+    </div>
+  </header>
+
+  <main id="inicio" class="page-shell">
+    <section class="hero-layout" aria-label="Rifa principal">
+      <div class="hero-content">
+        <section class="hero-copy">
+          <p class="eyebrow">Rifa oficial premium</p>
+          <h1>Grande Rifa Do Cipriano:<br>concorra a prêmios incríveis!</h1>
+          <p>Participe e concorra a um iPhone 15 Pro, um MacBook Pro e R$ 5.000 em dinheiro. Escolha seus números da sorte em uma experiência rápida, elegante e segura.</p>
+          <div class="hero-buttons">
+            <a class="btn btn-gold" href="#numeros">Adquirir rifa agora</a>
+            <a class="btn btn-outline" href="#numeros">Escolher números</a>
+          </div>
+        </section>
+
+        <section class="raffle-card" id="numeros" aria-label="Escolha seus números">
+          <div class="floating-crown" aria-hidden="true"></div>
+          <div class="floating-star" aria-hidden="true">★</div>
+          <h2>Escolha seus números da sorte!</h2>
+          <div class="raffle-grid">
+            <div class="numbers-grid" id="numbersGrid"></div>
+
+            <aside class="checkout-card">
+              <div>
+                <span>Quantidade selecionada</span>
+                <strong id="selectedCount">0</strong>
+              </div>
+              <div>
+                <span>Valor total</span>
+                <strong id="selectedTotal">R$ 0,00</strong>
+              </div>
+              <a class="btn btn-gold btn-full" href="#contato">Prosseguir para pagamento</a>
+            </aside>
+          </div>
+        </section>
+
+        <section class="active-raffles" id="rifas">
+          <div class="section-title">
+            <h2>Rifas ativas</h2>
+            <span>1 campanha em destaque</span>
+          </div>
+          <article class="feature-prize">
+            <div>
+              <span class="status-pill">Em andamento</span>
+              <h3>Combo dos sonhos: iPhone, MacBook e R$ 5.000</h3>
+              <p>Garanta seus números e acompanhe o sorteio pelo canal oficial da Rifa Do Cipriano.</p>
+            </div>
+            <a class="btn btn-outline" href="#numeros">Participar</a>
+          </article>
+        </section>
+      </div>
+
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-crown" aria-hidden="true"></div>
+          <h2>Histórico de rifas</h2>
+          <div class="history-list">
+            <article>
+              <span>Nome da Rifa</span>
+              <span>Data do Sorteio</span>
+              <span>Status</span>
+              <strong>Rifa do Dia dos Pais</strong>
+              <strong>10/08/2023</strong>
+              <em>Encerrada</em>
+            </article>
+            <article>
+              <span>Nome da Rifa</span>
+              <span>Data do Sorteio</span>
+              <span>Status</span>
+              <strong>Rifa do Dia dos Pais</strong>
+              <strong>10/08/2023</strong>
+              <em>Encerrada</em>
+            </article>
+            <article>
+              <span>Nome da Rifa</span>
+              <span>Data do Sorteio</span>
+              <span>Status</span>
+              <strong>Rifa do Dia dos Pais</strong>
+              <strong>02/08/2023</strong>
+              <em>Encerrada</em>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel winners-panel" id="titulos">
+          <div class="panel-star" aria-hidden="true">★</div>
+          <h2>Ganhadores sorteados</h2>
+          <div class="winner-list">
+            <article><span>José Silva - iPhone 15 Pro</span><b>★</b></article>
+            <article><span>Maria Souza - R$ 5.000</span><b>★</b></article>
+            <article><span>Carlos Santos - TV 65"</span><b>★</b></article>
+            <article><span>José Purva - R$ 5.000</span><b>★</b></article>
+          </div>
+        </section>
+
+        <section class="how-panel" id="como-funciona">
+          <h2>Como funciona</h2>
+          <ol>
+            <li>Escolha seus números.</li>
+            <li>Informe seus dados pelo contato oficial.</li>
+            <li>Confirme o pagamento e aguarde o sorteio.</li>
+          </ol>
+        </section>
+
+        <footer class="sidebar-footer" id="contato">
+          <div>
+            <a href="#inicio">Início</a>
+            <a href="#rifas">Rifas Ativas</a>
+            <a href="#titulos">Títulos</a>
+          </div>
+          <div>
+            <a href="#numeros">Lotes</a>
+            <a href="#como-funciona">Sorteios</a>
+            <a href="https://wa.me/5565999999999" target="_blank" rel="noreferrer">Contato</a>
+          </div>
+          <small>Copyright © Rifa Do Cipriano</small>
+        </footer>
+      </aside>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

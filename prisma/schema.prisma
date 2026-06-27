@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UsuarioClienteStatus {
+  ativo
+  suspenso
+  inativo
+}
+
+enum CampanhaStatus {
+  ativo
+  pausado
+  finalizado
+}
+
+enum RifinhaStatus {
+  ativo
+  pausado
+  finalizado
+}
+
+enum StatusPagamento {
+  pendente
+  pago
+  expirado
+  cancelado
+}
+
+enum CotaStatus {
+  disponivel
+  reservado
+  pago
+}
+
+model UsuarioCliente {
+  id        String                @id @default(uuid()) @db.Uuid
+  nome      String                @db.VarChar(160)
+  email     String                @unique @db.VarChar(180)
+  whatsapp  String?               @db.VarChar(30)
+  senhaHash String                @map("senha_hash") @db.VarChar(255)
+  status    UsuarioClienteStatus  @default(ativo)
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
+
+  campanhas Campanha[]
+
+  @@map("usuarios_clientes")
+}
+
+model Campanha {
+  id               String          @id @default(uuid()) @db.Uuid
+  usuarioClienteId String          @map("usuario_cliente_id") @db.Uuid
+  titulo           String          @db.VarChar(180)
+  slug             String          @unique @db.VarChar(180)
+  descricao        String?         @db.Text
+  regulamento      String?         @db.Text
+  valorCota        Decimal         @map("valor_cota") @db.Decimal(10, 2)
+  totalCotas       Int             @map("total_cotas")
+  status           CampanhaStatus  @default(pausado)
+  imagemUrl        String?         @map("imagem_url") @db.Text
+  dataSorteio      DateTime?       @map("data_sorteio")
+  metadata         Json            @default("{}")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  usuarioCliente UsuarioCliente @relation(fields: [usuarioClienteId], references: [id], onDelete: Cascade)
+  rifinhas       Rifinha[]
+  pedidos        Pedido[]
+  cotas          CotaCampanha[]
+
+  @@index([usuarioClienteId])
+  @@index([status])
+  @@map("campanhas")
+}
+
+model Rifinha {
+  id          String        @id @default(uuid()) @db.Uuid
+  campanhaId  String        @map("campanha_id") @db.Uuid
+  titulo      String        @db.VarChar(180)
+  descricao   String?       @db.Text
+  valorCota   Decimal       @map("valor_cota") @db.Decimal(10, 2)
+  totalCotas  Int           @map("total_cotas")
+  status      RifinhaStatus @default(ativo)
+  imagemUrl   String?       @map("imagem_url") @db.Text
+  ordem       Int           @default(0)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  campanha Campanha @relation(fields: [campanhaId], references: [id], onDelete: Cascade)
+  pedidos  Pedido[]
+
+  @@index([campanhaId])
+  @@index([status])
+  @@map("rifinhas")
+}
+
+model Pedido {
+  id                String          @id @default(uuid()) @db.Uuid
+  campanhaId        String          @map("campanha_id") @db.Uuid
+  rifinhaId         String?         @map("rifinha_id") @db.Uuid
+  compradorNome     String          @map("comprador_nome") @db.VarChar(160)
+  compradorWhatsapp String          @map("comprador_whatsapp") @db.VarChar(30)
+  compradorEmail    String?         @map("comprador_email") @db.VarChar(180)
+  cotasReservadas   Int[]           @map("cotas_reservadas")
+  statusPagamento   StatusPagamento @default(pendente) @map("status_pagamento")
+  valorTotal        Decimal         @map("valor_total") @db.Decimal(10, 2)
+  pixCopiaCola      String?         @map("pix_copia_cola") @db.Text
+  pixQrCode         String?         @map("pix_qr_code") @db.Text
+  expiresAt         DateTime?       @map("expires_at")
+  paidAt            DateTime?       @map("paid_at")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  campanha Campanha @relation(fields: [campanhaId], references: [id], onDelete: Restrict)
+  rifinha  Rifinha? @relation(fields: [rifinhaId], references: [id], onDelete: SetNull)
+  cotas    CotaCampanha[]
+
+  @@index([campanhaId])
+  @@index([rifinhaId])
+  @@index([statusPagamento])
+  @@map("pedidos")
+}
+
+model CotaCampanha {
+  id         String     @id @default(uuid()) @db.Uuid
+  campanhaId String     @map("campanha_id") @db.Uuid
+  pedidoId   String?    @map("pedido_id") @db.Uuid
+  numero     Int
+  status     CotaStatus @default(disponivel)
+  reservedAt DateTime?  @map("reserved_at")
+  paidAt     DateTime?  @map("paid_at")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  campanha Campanha @relation(fields: [campanhaId], references: [id], onDelete: Cascade)
+  pedido   Pedido?  @relation(fields: [pedidoId], references: [id], onDelete: SetNull)
+
+  @@unique([campanhaId, numero])
+  @@index([campanhaId, status])
+  @@index([pedidoId])
+  @@map("cotas_campanha")
+}

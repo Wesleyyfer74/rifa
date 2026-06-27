@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel - Rifa Do Cipriano</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: {
+              50: '#fff8dc',
+              100: '#ffecad',
+              300: '#f5c861',
+              500: '#d99a22',
+              700: '#8f5d12',
+            },
+            panel: {
+              bg: '#050505',
+              card: '#0d0b07',
+              soft: '#171208',
+              line: 'rgba(245, 200, 97, 0.24)',
+              muted: '#b8a879',
+            },
+          },
+          boxShadow: {
+            gold: '0 18px 45px rgba(217, 154, 34, 0.16)',
+            dark: '0 24px 60px rgba(0, 0, 0, 0.42)',
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/painel-tailwind.css">
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-panel-bg text-gold-50 antialiased">
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_0%,rgba(217,154,34,0.18),transparent_34rem),linear-gradient(180deg,#050505_0%,#090805_48%,#050505_100%)]"></div>
+
+  <header class="sticky top-0 z-40 border-b border-panel-line bg-black/90 backdrop-blur-xl">
+    <div class="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+      <a href="/painel" class="flex items-center gap-3">
+        <div class="grid h-11 w-11 place-items-center rounded-2xl border border-gold-300/40 bg-gold-500 text-black shadow-gold">
+          <i data-lucide="ticket" class="h-6 w-6"></i>
+        </div>
+        <div class="leading-tight">
+          <strong class="block text-lg font-extrabold tracking-tight text-gold-50">Rifa Do Cipriano</strong>
+          <span class="text-xs font-semibold text-panel-muted">Painel administrativo</span>
+        </div>
+      </a>
+
+      <nav class="hidden items-center gap-2 rounded-2xl border border-panel-line bg-panel-card/90 p-1.5 lg:flex" aria-label="Navegação principal">
+        <button class="nav-item active" data-tab="campanhas" type="button">
+          <i data-lucide="layout-grid"></i>
+          <span>Campanhas</span>
+        </button>
+        <button class="nav-item" data-tab="rifinhas" type="button">
+          <i data-lucide="badge-percent"></i>
+          <span>Rifinhas</span>
+        </button>
+        <button class="nav-item" data-tab="pedidos" type="button">
+          <i data-lucide="receipt-text"></i>
+          <span>Pedidos</span>
+        </button>
+        <button class="nav-item" data-tab="clientes" type="button">
+          <i data-lucide="users-round"></i>
+          <span>Clientes</span>
+        </button>
+        <button class="nav-item" data-tab="customizacao" type="button">
+          <i data-lucide="palette"></i>
+          <span>Customização</span>
+        </button>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <button class="grid h-11 w-11 place-items-center rounded-2xl border border-panel-line bg-panel-card text-panel-muted hover:text-gold-300" type="button" aria-label="Notificações">
+          <i data-lucide="bell" class="h-5 w-5"></i>
+        </button>
+        <button class="flex items-center gap-3 rounded-2xl border border-panel-line bg-panel-card px-3 py-2 text-left shadow-dark" type="button">
+          <div class="grid h-9 w-9 place-items-center rounded-xl bg-gold-500 text-sm font-bold text-black">WC</div>
+          <div class="hidden leading-tight sm:block">
+            <strong class="block text-sm font-bold text-gold-50">Wesley Cliente</strong>
+            <span class="text-xs font-medium text-panel-muted">Administrador</span>
+          </div>
+          <i data-lucide="chevron-down" class="hidden h-4 w-4 text-panel-muted sm:block"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="border-t border-panel-line bg-black/90 px-4 py-3 lg:hidden">
+      <nav class="flex gap-2 overflow-x-auto" aria-label="Navegação mobile">
+        <button class="mobile-nav-item active" data-tab="campanhas" type="button">Campanhas</button>
+        <button class="mobile-nav-item" data-tab="rifinhas" type="button">Rifinhas</button>
+        <button class="mobile-nav-item" data-tab="pedidos" type="button">Pedidos</button>
+        <button class="mobile-nav-item" data-tab="clientes" type="button">Clientes</button>
+        <button class="mobile-nav-item" data-tab="customizacao" type="button">Customização</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-6 py-8">
+    <section class="mb-8 grid gap-4 md:grid-cols-4">
+      <article class="rounded-3xl border border-panel-line bg-panel-card p-5 shadow-dark">
+        <span class="text-sm font-semibold text-panel-muted">Campanhas ativas</span>
+        <strong class="mt-2 block text-3xl font-extrabold text-gold-100">8</strong>
+      </article>
+      <article class="rounded-3xl border border-panel-line bg-panel-card p-5 shadow-dark">
+        <span class="text-sm font-semibold text-panel-muted">Pedidos hoje</span>
+        <strong class="mt-2 block text-3xl font-extrabold text-gold-100">126</strong>
+      </article>
+      <article class="rounded-3xl border border-panel-line bg-panel-card p-5 shadow-dark">
+        <span class="text-sm font-semibold text-panel-muted">Receita pendente</span>
+        <strong class="mt-2 block text-3xl font-extrabold text-gold-100">R$ 4.280</strong>
+      </article>
+      <article class="rounded-3xl border border-panel-line bg-panel-card p-5 shadow-dark">
+        <span class="text-sm font-semibold text-panel-muted">Cotas vendidas</span>
+        <strong class="mt-2 block text-3xl font-extrabold text-gold-100">18.4k</strong>
+      </article>
+    </section>
+
+    <section class="panel-screen" data-screen="campanhas">
+      <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wide text-gold-300">Gerenciamento</p>
+          <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-gold-50">Campanhas</h1>
+          <p class="mt-2 max-w-2xl text-sm font-medium text-panel-muted">Crie, publique e acompanhe suas rifas principais em cards objetivos dentro de um painel premium preto e dourado.</p>
+        </div>
+        <button class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold transition hover:bg-gold-300" type="button">
+          <i data-lucide="plus" class="h-5 w-5"></i>
+          Criar campanha
+        </button>
+      </div>
+
+      <div class="mb-6 flex flex-col gap-3 rounded-3xl border border-panel-line bg-panel-card p-4 shadow-dark md:flex-row md:items-center md:justify-between">
+        <label class="relative block flex-1">
+          <i data-lucide="search" class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-panel-muted"></i>
+          <input id="campaignSearch" class="h-12 w-full rounded-2xl border border-panel-line bg-black/40 pl-12 pr-4 text-sm font-semibold text-gold-50 outline-none transition placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Buscar por título, slug ou status">
+        </label>
+        <div class="flex gap-2">
+          <button class="h-12 rounded-2xl border border-panel-line bg-black/30 px-4 text-sm font-bold text-panel-muted hover:text-gold-100" type="button">Todos</button>
+          <button class="h-12 rounded-2xl border border-gold-500/50 bg-gold-500/10 px-4 text-sm font-bold text-gold-300" type="button">Ativos</button>
+        </div>
+      </div>
+
+      <div id="campaignGrid" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3"></div>
+    </section>
+
+    <section class="panel-screen hidden" data-screen="rifinhas">
+      <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wide text-gold-300">Aceleradores</p>
+          <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-gold-50">Rifinhas</h1>
+          <p class="mt-2 text-sm font-medium text-panel-muted">Configure rifas menores atreladas às campanhas principais para aumentar conversão.</p>
+        </div>
+        <button class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold" type="button">
+          <i data-lucide="plus" class="h-5 w-5"></i>
+          Criar rifinha
+        </button>
+      </div>
+
+      <div class="grid gap-5 lg:grid-cols-3">
+        <article class="rounded-3xl border border-panel-line bg-panel-card p-6 shadow-dark">
+          <span class="inline-flex rounded-full bg-gold-500/10 px-3 py-1 text-xs font-extrabold text-gold-300 ring-1 ring-gold-500/30">Ativa</span>
+          <h2 class="mt-4 text-xl font-extrabold text-gold-50">Rifinha Relâmpago</h2>
+          <p class="mt-2 text-sm font-medium text-panel-muted">100 cotas de R$ 2,00 vinculadas à campanha principal.</p>
+        </article>
+        <article class="rounded-3xl border border-panel-line bg-panel-card p-6 shadow-dark">
+          <span class="inline-flex rounded-full bg-white/5 px-3 py-1 text-xs font-extrabold text-panel-muted ring-1 ring-white/10">Pausada</span>
+          <h2 class="mt-4 text-xl font-extrabold text-gold-50">Rifinha de Aquecimento</h2>
+          <p class="mt-2 text-sm font-medium text-panel-muted">Use para campanhas antes da abertura oficial dos lotes.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel-screen hidden" data-screen="pedidos">
+      <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wide text-gold-300">Auditoria</p>
+          <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-gold-50">Pedidos</h1>
+          <p class="mt-2 max-w-2xl text-sm font-medium text-panel-muted">Selecione uma campanha ativa para gerenciar reservas, pagamentos pendentes, cotas pagas e histórico de compradores.</p>
+        </div>
+      </div>
+
+      <div class="grid gap-5 lg:grid-cols-3" id="ordersCampaignList"></div>
+    </section>
+
+    <section class="panel-screen hidden" data-screen="clientes">
+      <div class="rounded-3xl border border-panel-line bg-panel-card p-8 shadow-dark">
+        <h1 class="text-3xl font-extrabold text-gold-50">Clientes</h1>
+        <p class="mt-2 text-sm font-medium text-panel-muted">Área preparada para CRM dos compradores e donos das rifas.</p>
+      </div>
+    </section>
+
+    <section class="panel-screen hidden" data-screen="customizacao">
+      <div class="rounded-3xl border border-panel-line bg-panel-card p-8 shadow-dark">
+        <h1 class="text-3xl font-extrabold text-gold-50">Customização</h1>
+        <p class="mt-2 text-sm font-medium text-panel-muted">Área preparada para cores, domínio, pixel, scripts e aparência das páginas externas.</p>
+      </div>
+    </section>
+  </main>
+
+  <template id="campaignCardTemplate">
+    <article class="campaign-card overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark transition hover:-translate-y-0.5 hover:shadow-gold">
+      <div class="relative aspect-[16/10] overflow-hidden bg-panel-soft">
+        <img class="campaign-image h-full w-full object-cover opacity-90" alt="">
+        <span class="campaign-status absolute left-4 top-4 inline-flex rounded-full px-3 py-1 text-xs font-extrabold"></span>
+      </div>
+      <div class="p-5">
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <h2 class="campaign-title truncate text-lg font-extrabold text-gold-50"></h2>
+            <p class="campaign-slug mt-1 truncate text-sm font-semibold text-panel-muted"></p>
+          </div>
+          <button class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-panel-line text-panel-muted hover:text-gold-300" type="button" aria-label="Editar campanha">
+            <i data-lucide="more-horizontal" class="h-5 w-5"></i>
+          </button>
+        </div>
+        <div class="mt-5 grid grid-cols-3 gap-3 text-center">
+          <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
+            <span class="block text-xs font-bold text-panel-muted">Cotas</span>
+            <strong class="campaign-cotas mt-1 block text-sm font-extrabold text-gold-100"></strong>
+          </div>
+          <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
+            <span class="block text-xs font-bold text-panel-muted">Valor</span>
+            <strong class="campaign-price mt-1 block text-sm font-extrabold text-gold-100"></strong>
+          </div>
+          <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
+            <span class="block text-xs font-bold text-panel-muted">Vendidas</span>
+            <strong class="campaign-sold mt-1 block text-sm font-extrabold text-gold-100"></strong>
+          </div>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="/painel.js"></script>
+</body>
+</html>
