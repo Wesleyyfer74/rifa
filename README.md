@@ -25,7 +25,13 @@ Configure `DATABASE_URL` no `.env` apontando para um PostgreSQL.
 
 1. Crie um projeto no Railway.
 2. Adicione um banco PostgreSQL.
-3. Configure a variavel `DATABASE_URL` com a URL gerada pelo Railway.
+3. No servico da aplicacao Node, configure a variavel `DATABASE_URL`.
+   - Se o PostgreSQL estiver no mesmo projeto Railway, use uma referencia de variavel, por exemplo:
+     ```text
+     DATABASE_URL=${{Postgres.DATABASE_URL}}
+     ```
+   - O nome `Postgres` deve ser igual ao nome do servico de banco no Railway.
+   - Nao basta a variavel existir no servico do banco; ela precisa estar tambem no servico da aplicacao.
 4. Configure o deploy pelo GitHub.
 5. O comando de start ja esta pronto:
 
