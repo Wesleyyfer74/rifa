@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:railway": "prisma migrate deploy && node server.js",
     "dev": "node server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
