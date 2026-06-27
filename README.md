@@ -120,13 +120,21 @@ O Railway usara [railway.json](railway.json):
 npm run start:railway
 ```
 
-Esse comando executa:
+Esse comando executa o entrypoint [scripts/start-railway.js](scripts/start-railway.js):
 
-```bash
-npx prisma migrate deploy && node server.js
-```
+1. Aguarda o PostgreSQL aceitar conexao.
+2. Executa `npx prisma migrate deploy`.
+3. Executa `npm run db:seed` se esse script existir.
+4. Inicia `node server.js` com `NODE_ENV=production`.
 
 Assim, as migrations sao aplicadas antes do servidor iniciar.
+
+Variaveis opcionais para controlar a espera pelo banco:
+
+```env
+DB_WAIT_ATTEMPTS=60
+DB_WAIT_INTERVAL_MS=2000
+```
 
 ## Docker
 
