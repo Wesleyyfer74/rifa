@@ -1,13 +1,100 @@
-# Rifa Do Cipriano - Headless API
+# Rifa Do Cipriano - Headless API + Painel
 
-Sistema API-first para gestao de campanhas de rifa, rifinhas e pedidos.
+Projeto Node.js API-first para gestao de rifas, campanhas, rifinhas, pedidos e painel administrativo.
 
 ## Stack
 
-- Node.js
+- Node.js 20
 - Express
 - PostgreSQL
 - Prisma ORM
+- Frontend estatico para landing e painel
+- Tailwind via CDN no painel
+
+## Estrutura
+
+```text
+server.js                 # Entrada do backend
+src/                      # API Express modular
+prisma/                   # Schema e migrations PostgreSQL
+public/                   # Landing page e painel estatico
+Dockerfile                # Build para Railway/Docker
+railway.json              # Start command Railway
+```
+
+## URLs locais
+
+```text
+GET /health
+GET /
+GET /painel
+```
+
+## Variaveis de ambiente obrigatorias
+
+Cadastre estas variaveis no servico da aplicacao no Railway.
+
+### `DATABASE_URL`
+
+Conexao PostgreSQL usada pelo Prisma.
+
+Exemplo com referencia interna Railway:
+
+```env
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+```
+
+Se o servico do banco tiver outro nome, troque `Postgres` pelo nome correto.
+
+### `JWT_SECRET`
+
+Chave secreta para assinatura de tokens JWT da API.
+
+Use uma string longa e aleatoria:
+
+```env
+JWT_SECRET="gere-uma-chave-com-32-ou-mais-caracteres"
+```
+
+### `APP_KEY`
+
+Chave geral da aplicacao para criptografia/assinaturas internas futuras.
+
+```env
+APP_KEY="gere-outra-chave-com-32-ou-mais-caracteres"
+```
+
+### `CORS_ALLOWED_ORIGINS`
+
+Lista de origens autorizadas a consumir a API pelo navegador.
+
+Use virgula para separar multiplas URLs:
+
+```env
+CORS_ALLOWED_ORIGINS="https://seu-painel.up.railway.app,https://landing-do-cliente.com"
+```
+
+Durante desenvolvimento local:
+
+```env
+CORS_ALLOWED_ORIGINS="http://localhost:3000,http://127.0.0.1:3000"
+```
+
+### `PORT`
+
+Fornecida automaticamente pelo Railway. O backend usa `process.env.PORT`.
+
+```env
+PORT=3000
+```
+
+### `PUBLIC_APP_URL`
+
+URL publica do app, usada por integrações e links.
+
+```env
+PUBLIC_APP_URL="https://seu-app.up.railway.app"
+```
 
 ## Setup local
 
@@ -19,30 +106,40 @@ npm run db:migrate:dev
 npm start
 ```
 
-Configure `DATABASE_URL` no `.env` apontando para um PostgreSQL.
-
-## Railway
+## Deploy no Railway
 
 1. Crie um projeto no Railway.
 2. Adicione um banco PostgreSQL.
-3. No servico da aplicacao Node, configure a variavel `DATABASE_URL`.
-   - Se o PostgreSQL estiver no mesmo projeto Railway, use uma referencia de variavel, por exemplo:
-     ```text
-     DATABASE_URL=${{Postgres.DATABASE_URL}}
-     ```
-   - O nome `Postgres` deve ser igual ao nome do servico de banco no Railway.
-   - Nao basta a variavel existir no servico do banco; ela precisa estar tambem no servico da aplicacao.
-4. Configure o deploy pelo GitHub.
-5. O comando de start ja esta pronto:
+3. No servico da aplicacao Node, configure as variaveis listadas acima.
+4. Conecte o repositorio GitHub.
+5. Faça deploy.
+
+O Railway usara [railway.json](railway.json):
 
 ```bash
-npm start
+npm run start:railway
 ```
 
-Para aplicar migrations em producao:
+Esse comando executa:
 
 ```bash
-npm run db:migrate
+npx prisma migrate deploy && node server.js
+```
+
+Assim, as migrations sao aplicadas antes do servidor iniciar.
+
+## Docker
+
+Build local:
+
+```bash
+docker build -t rifa-do-cipriano .
+```
+
+Run local:
+
+```bash
+docker run --rm -p 3000:3000 --env-file .env rifa-do-cipriano
 ```
 
 ## Endpoints iniciais

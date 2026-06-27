@@ -1,9 +1,10 @@
 require('dotenv').config();
 
 const app = require('./src/app');
+const { env, validateRuntimeEnv } = require('./src/config/env');
 
-const PORT = process.env.PORT || 3000;
+validateRuntimeEnv();
 
-app.listen(PORT, () => {
-  console.log(`Rifa Do Cipriano API rodando na porta ${PORT}`);
+app.listen(env.port, () => {
+  console.log(`Rifa Do Cipriano API rodando na porta ${env.port}`);
 });
