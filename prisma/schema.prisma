@@ -112,6 +112,9 @@ model Pedido {
   valorTotal        Decimal         @map("valor_total") @db.Decimal(10, 2)
   pixCopiaCola      String?         @map("pix_copia_cola") @db.Text
   pixQrCode         String?         @map("pix_qr_code") @db.Text
+  gatewayProvider   String?         @map("gateway_provider") @db.VarChar(40)
+  gatewayPaymentId  String?         @unique @map("gateway_payment_id") @db.VarChar(120)
+  gatewayPayload    Json?           @map("gateway_payload")
   expiresAt         DateTime?       @map("expires_at")
   paidAt            DateTime?       @map("paid_at")
   createdAt         DateTime        @default(now()) @map("created_at")
@@ -124,6 +127,7 @@ model Pedido {
   @@index([campanhaId])
   @@index([rifinhaId])
   @@index([statusPagamento])
+  @@index([gatewayProvider])
   @@map("pedidos")
 }
 

@@ -82,11 +82,13 @@ Resposta:
     "id": "uuid",
     "campanha_id": "uuid",
     "status_pagamento": "pendente",
+    "gateway_provider": "mercado_pago",
+    "gateway_payment_id": "123456789",
     "cotas_reservadas": [1, 2, 3],
     "valor_total": 30,
     "expires_at": "2026-06-27T19:45:00.000Z",
-    "pix_copia_cola": null,
-    "pix_qr_code": null
+    "pix_copia_cola": "000201...",
+    "pix_qr_code": "iVBORw0KGgo..."
   }
 }
 ```
@@ -129,3 +131,13 @@ Fluxo:
 5. Se a quantidade atualizada for menor que a solicitada, a transacao e revertida.
 
 Isso impede que duas pessoas reservem/paguem o mesmo numero ao mesmo tempo.
+
+## Webhook de pagamento
+
+```http
+POST /api/v1/webhooks/pagamento
+```
+
+O endpoint valida a assinatura do Mercado Pago (`x-signature` + `x-request-id`) usando
+`MERCADO_PAGO_WEBHOOK_SECRET`. Quando o pagamento consultado no gateway estiver como
+`approved`, o pedido e suas cotas reservadas sao marcados como `pago`.

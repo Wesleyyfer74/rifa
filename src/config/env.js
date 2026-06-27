@@ -25,6 +25,11 @@ function validateRuntimeEnv() {
     requireEnv('JWT_SECRET');
     requireEnv('APP_KEY');
     requireEnv('CORS_ALLOWED_ORIGINS');
+
+    if ((process.env.PAYMENT_PROVIDER || 'mercado_pago') === 'mercado_pago') {
+      requireEnv('MERCADO_PAGO_ACCESS_TOKEN');
+      requireEnv('MERCADO_PAGO_WEBHOOK_SECRET');
+    }
   }
 }
 
@@ -36,6 +41,10 @@ const env = {
   appKey: process.env.APP_KEY,
   publicAppUrl: process.env.PUBLIC_APP_URL || 'http://localhost:3000',
   corsAllowedOrigins: parseAllowedOrigins(process.env.CORS_ALLOWED_ORIGINS),
+  paymentProvider: process.env.PAYMENT_PROVIDER || 'mercado_pago',
+  mercadoPagoAccessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN,
+  mercadoPagoWebhookSecret: process.env.MERCADO_PAGO_WEBHOOK_SECRET,
+  paymentWebhookAllowedIps: parseAllowedOrigins(process.env.PAYMENT_WEBHOOK_ALLOWED_IPS),
 };
 
 module.exports = {

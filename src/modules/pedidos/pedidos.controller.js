@@ -1,6 +1,7 @@
 const campanhasRepository = require('../campanhas/campanhas.repository');
 const pedidosRepository = require('./pedidos.repository');
 const pedidosService = require('./pedidos.service');
+const paymentsService = require('../payments/payments.service');
 const { HttpError } = require('../../utils/http-error');
 const {
   reservarPedidoBody,
@@ -12,7 +13,7 @@ async function reservar(req, res, next) {
   try {
     const body = parseOrThrow(reservarPedidoBody, req.body);
 
-    const pedido = await pedidosService.reservePendingOrder({
+    const pedidoPendente = await pedidosService.reservePendingOrder({
       campanhaId: body.campanha_id || body.campanhaId,
       compradorNome: body.nome || body.compradorNome,
       compradorWhatsapp: body.whatsapp || body.compradorWhatsapp,
@@ -21,10 +22,14 @@ async function reservar(req, res, next) {
       numeros: body.numeros || body.cotasReservadas,
     });
 
+    const pedido = await paymentsService.generatePixForPedido(pedidoPendente);
+
     return res.status(201).json({
       data: {
         id: pedido.id,
         campanha_id: pedido.campanhaId,
+        gateway_provider: pedido.gatewayProvider,
+        gateway_payment_id: pedido.gatewayPaymentId,
         status_pagamento: pedido.statusPagamento,
         cotas_reservadas: pedido.cotasReservadas,
         valor_total: Number(pedido.valorTotal),

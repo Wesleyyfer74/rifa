@@ -8,6 +8,7 @@ const { env } = require('./config/env');
 const { errorHandler } = require('./middlewares/error-handler');
 
 const app = express();
+app.set('trust proxy', true);
 
 const corsOptions = {
   origin(origin, callback) {

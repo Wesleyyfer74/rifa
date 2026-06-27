@@ -88,6 +88,38 @@ Fornecida automaticamente pelo Railway. O backend usa `process.env.PORT`.
 PORT=3000
 ```
 
+### `PAYMENT_PROVIDER`
+
+Gateway de pagamento usado pela API. Valor atual suportado:
+
+```env
+PAYMENT_PROVIDER="mercado_pago"
+```
+
+### `MERCADO_PAGO_ACCESS_TOKEN`
+
+Token privado do Mercado Pago usado para criar pagamentos PIX e consultar pagamentos recebidos no webhook.
+
+```env
+MERCADO_PAGO_ACCESS_TOKEN="APP_USR-..."
+```
+
+### `MERCADO_PAGO_WEBHOOK_SECRET`
+
+Chave secreta configurada no painel de webhooks do Mercado Pago para validar `x-signature`.
+
+```env
+MERCADO_PAGO_WEBHOOK_SECRET="sua-chave-secreta-do-webhook"
+```
+
+### `PAYMENT_WEBHOOK_ALLOWED_IPS`
+
+Opcional. Lista de IPs autorizados para chamar o webhook, separados por virgula. Se vazio, a seguranca fica baseada na assinatura do gateway.
+
+```env
+PAYMENT_WEBHOOK_ALLOWED_IPS=""
+```
+
 ### `PUBLIC_APP_URL`
 
 URL publica do app, usada por integrações e links.
@@ -157,6 +189,7 @@ docker run --rm -p 3000:3000 --env-file .env rifa-do-cipriano
 - `GET /api/v1/campanhas/:slug`
 - `POST /api/v1/pedidos/reservar`
 - `GET /api/v1/pedidos/status/:pedido_id`
+- `POST /api/v1/webhooks/pagamento`
 - `POST /api/v1/admin/usuarios-clientes`
 - `POST /api/v1/admin/campanhas`
 
