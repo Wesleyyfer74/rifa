@@ -5,12 +5,13 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "start:railway": "prisma migrate deploy && node server.js",
+    "start:railway": "npx prisma migrate deploy && node server.js",
     "dev": "node server.js",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy",
-    "db:migrate:dev": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "postinstall": "npx prisma generate",
+    "db:generate": "npx prisma generate",
+    "db:migrate": "npx prisma migrate deploy",
+    "db:migrate:dev": "npx prisma migrate dev",
+    "db:studio": "npx prisma studio"
   },
   "engines": {
     "node": ">=18"
@@ -21,9 +22,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.19.2",
     "helmet": "^7.2.0",
+    "prisma": "^5.22.0",
     "zod": "^3.25.76"
-  },
-  "devDependencies": {
-    "prisma": "^5.22.0"
   }
 }
