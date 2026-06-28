@@ -40,8 +40,50 @@ function findOpenByCampaignAndCotas(campanhaId, cotas, client = prisma) {
   });
 }
 
+function listForAdmin(filters = {}, client = prisma) {
+  const where = {};
+
+  if (filters.campanhaId) {
+    where.campanhaId = filters.campanhaId;
+  }
+
+  if (filters.statusPagamento) {
+    where.statusPagamento = filters.statusPagamento;
+  }
+
+  return client.pedido.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: filters.limit || 100,
+    include: {
+      campanha: {
+        select: {
+          id: true,
+          titulo: true,
+          slug: true,
+          imagemUrl: true,
+        },
+      },
+      rifinha: {
+        select: {
+          id: true,
+          titulo: true,
+        },
+      },
+      cotas: {
+        orderBy: { numero: 'asc' },
+        select: {
+          numero: true,
+          status: true,
+        },
+      },
+    },
+  });
+}
+
 module.exports = {
   create,
   findById,
   findOpenByCampaignAndCotas,
+  listForAdmin,
 };

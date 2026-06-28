@@ -45,12 +45,48 @@ const campaigns = [
   },
 ];
 
+const fallbackOrders = [
+  {
+    id: 'preview-001',
+    campanha: { titulo: 'Grande Rifa Do Cipriano', slug: 'grande-rifa-do-cipriano' },
+    nome_comprador: 'José Silva',
+    whatsapp_comprador: '65999999999',
+    cotas: [1, 5, 12],
+    status_pagamento: 'pago',
+    valor_total: 30,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'preview-002',
+    campanha: { titulo: 'Pix da Sorte - R$ 5.000', slug: 'pix-da-sorte-5000' },
+    nome_comprador: 'Maria Souza',
+    whatsapp_comprador: '65988888888',
+    cotas: [20, 21],
+    status_pagamento: 'pendente',
+    valor_total: 10,
+    created_at: new Date().toISOString(),
+  },
+];
+
 const navItems = document.querySelectorAll('.nav-item, .mobile-nav-item');
 const screens = document.querySelectorAll('.panel-screen');
 const campaignGrid = document.querySelector('#campaignGrid');
 const ordersCampaignList = document.querySelector('#ordersCampaignList');
+const ordersList = document.querySelector('#ordersList');
+const refreshOrdersButton = document.querySelector('#refreshOrders');
 const searchInput = document.querySelector('#campaignSearch');
 const template = document.querySelector('#campaignCardTemplate');
+const campaignModal = document.querySelector('#campaignModal');
+const campaignForm = document.querySelector('#campaignForm');
+
+function slugify(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '');
+}
 
 function statusClasses(status) {
   if (status === 'Ativo') {
@@ -58,6 +94,19 @@ function statusClasses(status) {
   }
 
   return 'bg-white/5 text-panel-muted ring-1 ring-white/10';
+}
+
+function paymentStatusClasses(status) {
+  if (status === 'pago') return 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30';
+  if (status === 'expirado') return 'bg-red-500/15 text-red-300 ring-1 ring-red-500/30';
+  return 'bg-gold-500/15 text-gold-300 ring-1 ring-gold-500/35';
+}
+
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 }
 
 function renderCampaigns(items) {
@@ -114,6 +163,62 @@ function renderOrderCampaigns() {
   lucide.createIcons();
 }
 
+function renderOrders(orders) {
+  if (!orders.length) {
+    ordersList.innerHTML = `
+      <div class="p-8 text-center">
+        <p class="text-sm font-bold text-panel-muted">Nenhum pedido encontrado.</p>
+      </div>
+    `;
+    return;
+  }
+
+  ordersList.innerHTML = orders.map((order) => {
+    const status = order.status_pagamento || 'pendente';
+    const cotas = Array.isArray(order.cotas) ? order.cotas : [];
+    const initials = (order.nome_comprador || 'C').slice(0, 2).toUpperCase();
+
+    return `
+      <article class="grid gap-4 p-5 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center">
+        <div class="flex items-center gap-4">
+          <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gold-500 text-sm font-extrabold text-black">${initials}</div>
+          <div class="min-w-0">
+            <h3 class="truncate text-base font-extrabold text-gold-50">${order.nome_comprador || 'Comprador'}</h3>
+            <p class="mt-1 truncate text-sm font-semibold text-panel-muted">${order.whatsapp_comprador || '-'}</p>
+          </div>
+        </div>
+        <div>
+          <p class="truncate text-sm font-bold text-gold-100">${order.campanha?.titulo || 'Campanha'}</p>
+          <p class="mt-1 text-xs font-semibold text-panel-muted">Cotas: ${cotas.map((n) => String(n).padStart(3, '0')).join(', ') || '-'}</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 lg:justify-end">
+          <span class="rounded-full px-3 py-1 text-xs font-extrabold uppercase ${paymentStatusClasses(status)}">${status}</span>
+          <strong class="text-base font-extrabold text-gold-50">${formatMoney(order.valor_total)}</strong>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+async function loadOrders() {
+  ordersList.innerHTML = `
+    <div class="p-8 text-center">
+      <p class="text-sm font-bold text-panel-muted">Carregando pedidos...</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('/api/v1/admin/pedidos?limit=50');
+    if (!response.ok) throw new Error('Falha ao buscar pedidos');
+    const payload = await response.json();
+    renderOrders(payload.data || []);
+  } catch (error) {
+    renderOrders(fallbackOrders);
+  }
+
+  lucide.createIcons();
+}
+
 function setActiveTab(tab) {
   navItems.forEach((item) => {
     const isActive = item.dataset.tab === tab;
@@ -123,6 +228,10 @@ function setActiveTab(tab) {
   screens.forEach((screen) => {
     screen.classList.toggle('hidden', screen.dataset.screen !== tab);
   });
+
+  if (tab === 'pedidos') {
+    loadOrders();
+  }
 }
 
 function filterCampaigns(value) {
@@ -140,11 +249,56 @@ function filterCampaigns(value) {
   }));
 }
 
+function openCampaignModal() {
+  campaignModal.classList.remove('hidden');
+  campaignModal.classList.add('flex');
+  campaignForm.elements.title.focus();
+}
+
+function closeCampaignModal() {
+  campaignModal.classList.add('hidden');
+  campaignModal.classList.remove('flex');
+  campaignForm.reset();
+}
+
+function createCampaignFromForm(event) {
+  event.preventDefault();
+  const formData = new FormData(campaignForm);
+  const title = String(formData.get('title')).trim();
+  const image = String(formData.get('image')).trim();
+  const price = Number(formData.get('price'));
+  const cotas = Number(formData.get('maxCotas'));
+
+  campaigns.unshift({
+    title,
+    slug: slugify(title),
+    status: 'Ativo',
+    image,
+    cotas,
+    price: formatMoney(price),
+    sold: '0',
+    orders: 0,
+    revenue: formatMoney(0),
+  });
+
+  renderCampaigns(campaigns);
+  renderOrderCampaigns();
+  closeCampaignModal();
+}
+
 navItems.forEach((item) => {
   item.addEventListener('click', () => setActiveTab(item.dataset.tab));
 });
 
 searchInput.addEventListener('input', (event) => filterCampaigns(event.target.value));
+document.querySelector('#openCampaignModal').addEventListener('click', openCampaignModal);
+document.querySelector('#closeCampaignModal').addEventListener('click', closeCampaignModal);
+document.querySelector('#cancelCampaignModal').addEventListener('click', closeCampaignModal);
+document.querySelector('#campaignModal').addEventListener('click', (event) => {
+  if (event.target.id === 'campaignModal') closeCampaignModal();
+});
+campaignForm.addEventListener('submit', createCampaignFromForm);
+refreshOrdersButton.addEventListener('click', loadOrders);
 
 renderCampaigns(campaigns);
 renderOrderCampaigns();

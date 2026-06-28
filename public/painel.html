@@ -133,7 +133,7 @@
           <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-gold-50">Campanhas</h1>
           <p class="mt-2 max-w-2xl text-sm font-medium text-panel-muted">Crie, publique e acompanhe suas rifas principais em cards objetivos dentro de um painel premium preto e dourado.</p>
         </div>
-        <button class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold transition hover:bg-gold-300" type="button">
+        <button id="openCampaignModal" class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold transition hover:bg-gold-300" type="button">
           <i data-lucide="plus" class="h-5 w-5"></i>
           Criar campanha
         </button>
@@ -190,6 +190,20 @@
       </div>
 
       <div class="grid gap-5 lg:grid-cols-3" id="ordersCampaignList"></div>
+
+      <section class="mt-8 overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+        <div class="flex flex-col gap-3 border-b border-panel-line p-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-xl font-extrabold text-gold-50">Pedidos recebidos</h2>
+            <p class="mt-1 text-sm font-medium text-panel-muted">Atualizado via API para auditoria de reservas e pagamentos.</p>
+          </div>
+          <button id="refreshOrders" class="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-gold-500/40 bg-gold-500/10 px-4 text-sm font-extrabold text-gold-300 hover:bg-gold-500/20" type="button">
+            <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+            Atualizar
+          </button>
+        </div>
+        <div id="ordersList" class="divide-y divide-panel-line"></div>
+      </section>
     </section>
 
     <section class="panel-screen hidden" data-screen="clientes">
@@ -240,6 +254,49 @@
       </div>
     </article>
   </template>
+
+  <div id="campaignModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+    <div class="w-full max-w-2xl overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+      <div class="flex items-center justify-between border-b border-panel-line p-6">
+        <div>
+          <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Nova campanha</p>
+          <h2 class="mt-1 text-2xl font-extrabold text-gold-50">Criar campanha</h2>
+        </div>
+        <button id="closeCampaignModal" class="grid h-11 w-11 place-items-center rounded-2xl border border-panel-line text-panel-muted hover:text-gold-300" type="button" aria-label="Fechar modal">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <form id="campaignForm" class="grid gap-5 p-6">
+        <label class="grid gap-2">
+          <span class="text-sm font-bold text-panel-muted">Título</span>
+          <input name="title" required maxlength="180" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: R$50.000">
+        </label>
+
+        <label class="grid gap-2">
+          <span class="text-sm font-bold text-panel-muted">Imagem</span>
+          <input name="image" required class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="https://...">
+        </label>
+
+        <div class="grid gap-5 md:grid-cols-2">
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Valor da Cota</span>
+            <input name="price" required min="0.01" step="0.01" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10.00">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Quantidade Máxima de Cotas</span>
+            <input name="maxCotas" required min="1" step="1" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10000">
+          </label>
+        </div>
+
+        <div class="flex flex-col-reverse gap-3 border-t border-panel-line pt-5 sm:flex-row sm:justify-end">
+          <button id="cancelCampaignModal" class="h-12 rounded-2xl border border-panel-line px-5 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button">Cancelar</button>
+          <button class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Salvar campanha</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="/painel.js"></script>
 </body>

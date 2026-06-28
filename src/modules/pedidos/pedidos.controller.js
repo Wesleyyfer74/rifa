@@ -83,9 +83,39 @@ async function getStatus(req, res, next) {
   }
 }
 
+async function listAdmin(req, res, next) {
+  try {
+    const pedidos = await pedidosRepository.listForAdmin({
+      campanhaId: req.query.campanha_id,
+      statusPagamento: req.query.status_pagamento,
+      limit: req.query.limit ? Number(req.query.limit) : 100,
+    });
+
+    return res.json({
+      data: pedidos.map((pedido) => ({
+        id: pedido.id,
+        campanha_id: pedido.campanhaId,
+        campanha: pedido.campanha,
+        rifinha: pedido.rifinha,
+        nome_comprador: pedido.compradorNome,
+        whatsapp_comprador: pedido.compradorWhatsapp,
+        cotas: pedido.cotasReservadas,
+        status_pagamento: pedido.statusPagamento,
+        valor_total: Number(pedido.valorTotal),
+        expires_at: pedido.expiresAt,
+        paid_at: pedido.paidAt,
+        created_at: pedido.createdAt,
+      })),
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   reservar,
   create,
   getById,
   getStatus,
+  listAdmin,
 };
