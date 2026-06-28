@@ -118,7 +118,13 @@ PORT=3000
 
 ### `PAYMENT_PROVIDER`
 
-Gateway de pagamento usado pela API. Valor atual suportado:
+Opcional. Gateway de pagamento usado pela API. Por padrao o sistema sobe em modo manual:
+
+```env
+PAYMENT_PROVIDER="manual"
+```
+
+Para ativar PIX via Mercado Pago:
 
 ```env
 PAYMENT_PROVIDER="mercado_pago"
@@ -126,6 +132,7 @@ PAYMENT_PROVIDER="mercado_pago"
 
 ### `MERCADO_PAGO_ACCESS_TOKEN`
 
+Obrigatorio somente quando `PAYMENT_PROVIDER=mercado_pago`.
 Token privado do Mercado Pago usado para criar pagamentos PIX e consultar pagamentos recebidos no webhook.
 
 ```env
@@ -134,6 +141,7 @@ MERCADO_PAGO_ACCESS_TOKEN="APP_USR-..."
 
 ### `MERCADO_PAGO_WEBHOOK_SECRET`
 
+Obrigatorio somente quando `PAYMENT_PROVIDER=mercado_pago`.
 Chave secreta configurada no painel de webhooks do Mercado Pago para validar `x-signature`.
 
 ```env

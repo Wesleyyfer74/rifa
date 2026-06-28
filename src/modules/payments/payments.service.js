@@ -17,7 +17,7 @@ function ensureAllowedIp(req) {
 
 async function generatePixForPedido(pedido) {
   if (env.paymentProvider !== 'mercado_pago') {
-    throw new HttpError(500, `Gateway nao suportado: ${env.paymentProvider}`);
+    throw new HttpError(503, 'Gateway PIX nao configurado. Defina PAYMENT_PROVIDER=mercado_pago e as credenciais do Mercado Pago.');
   }
 
   const pix = await mercadoPago.createPixPayment(pedido);
@@ -87,7 +87,11 @@ async function handleWebhook(req) {
   ensureAllowedIp(req);
 
   if (env.paymentProvider !== 'mercado_pago') {
-    throw new HttpError(500, `Gateway nao suportado: ${env.paymentProvider}`);
+    return {
+      handled: false,
+      gateway_status: 'disabled',
+      message: 'Webhook ignorado porque PAYMENT_PROVIDER nao esta configurado como mercado_pago.',
+    };
   }
 
   const { paymentId } = mercadoPago.validateWebhookSignature(req);
