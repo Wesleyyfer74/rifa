@@ -162,6 +162,45 @@ Endpoint SSE preparado para atualizacoes em tempo real quando um webhook marcar 
 GET /api/v1/campanhas/:slug/esteira/stream
 ```
 
+### Area do Comprador global
+
+```http
+POST /api/v1/comprador/consultar
+Content-Type: application/json
+```
+
+Busca em todo o sistema os pedidos pagos vinculados ao WhatsApp informado,
+independente do dono da rifa.
+
+Body:
+
+```json
+{
+  "whatsapp": "65999999999"
+}
+```
+
+Resposta:
+
+```json
+{
+  "data": [
+    {
+      "dono_rifa": "Rifa do Cipriano",
+      "campanha": {
+        "id": "uuid",
+        "titulo": "Grande Rifa do Cipriano",
+        "slug": "grande-rifa-do-cipriano",
+        "total_cotas": 10000
+      },
+      "quantidade_cotas": 60,
+      "chance_percentual": 0.6,
+      "chance_label": "0,6%"
+    }
+  ]
+}
+```
+
 ## Concorrencia
 
 A reserva usa a tabela `cotas_campanha` com chave unica por `campanha_id + numero`.

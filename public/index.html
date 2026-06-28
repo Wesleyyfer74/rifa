@@ -23,7 +23,7 @@
     </nav>
 
     <div class="header-actions">
-      <a class="account-link" href="#contato">Minha Conta</a>
+      <a class="account-link" href="#area-comprador" id="openBuyerArea">Minha Conta</a>
       <a class="cart-link" href="#numeros" aria-label="Números selecionados">
         <span>0</span>
       </a>
@@ -155,6 +155,30 @@
       </aside>
     </section>
   </main>
+
+  <div class="buyer-modal" id="buyerModal" aria-hidden="true">
+    <section class="buyer-dialog" role="dialog" aria-modal="true" aria-labelledby="buyerAreaTitle">
+      <header class="buyer-dialog-header">
+        <div>
+          <p class="eyebrow">Área do Comprador</p>
+          <h2 id="buyerAreaTitle">Consulte suas cotas</h2>
+        </div>
+        <button class="buyer-close" id="closeBuyerArea" type="button" aria-label="Fechar área do comprador">×</button>
+      </header>
+
+      <form class="buyer-form" id="buyerForm">
+        <label for="buyerWhatsapp">WhatsApp</label>
+        <div class="buyer-input-row">
+          <input id="buyerWhatsapp" name="whatsapp" inputmode="tel" autocomplete="tel" placeholder="Digite seu WhatsApp" required>
+          <button class="btn btn-gold" type="submit">Consultar Minhas Cotas</button>
+        </div>
+      </form>
+
+      <div class="buyer-results" id="buyerResults" aria-live="polite">
+        <p class="buyer-empty">Informe seu WhatsApp para ver todas as campanhas em que você participa.</p>
+      </div>
+    </section>
+  </div>
 
   <script src="/app.js"></script>
 </body>

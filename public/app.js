@@ -4,6 +4,11 @@ const selectedTotal = document.querySelector('#selectedTotal');
 const cartBadge = document.querySelector('.cart-link span');
 const salesTicker = document.querySelector('.sales-ticker');
 const salesTickerText = document.querySelector('#salesTickerText');
+const openBuyerArea = document.querySelector('#openBuyerArea');
+const closeBuyerArea = document.querySelector('#closeBuyerArea');
+const buyerModal = document.querySelector('#buyerModal');
+const buyerForm = document.querySelector('#buyerForm');
+const buyerResults = document.querySelector('#buyerResults');
 const selected = new Set([1, 2, 3, 13, 14]);
 const price = 10;
 let latestEsteiraText = '';
@@ -132,8 +137,93 @@ function listenSalesTickerStream() {
   });
 }
 
+function openBuyerModal(event) {
+  event.preventDefault();
+  buyerModal.classList.add('is-open');
+  buyerModal.setAttribute('aria-hidden', 'false');
+  buyerForm.elements.whatsapp.focus();
+}
+
+function closeBuyerModal() {
+  buyerModal.classList.remove('is-open');
+  buyerModal.setAttribute('aria-hidden', 'true');
+}
+
+function renderBuyerLoading() {
+  buyerResults.innerHTML = '<p class="buyer-empty">Consultando suas cotas...</p>';
+}
+
+function renderBuyerEmpty() {
+  buyerResults.innerHTML = '<p class="buyer-empty">Nenhuma cota paga foi encontrada para este WhatsApp.</p>';
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function renderBuyerResults(items) {
+  if (!items.length) {
+    renderBuyerEmpty();
+    return;
+  }
+
+  buyerResults.innerHTML = items.map((item) => `
+    <article class="buyer-card">
+      <div>
+        <span>${escapeHtml(item.dono_rifa)}</span>
+        <h3>${escapeHtml(item.campanha.titulo)}</h3>
+        <p>${item.quantidade_cotas} cota${item.quantidade_cotas === 1 ? '' : 's'} confirmada${item.quantidade_cotas === 1 ? '' : 's'}</p>
+      </div>
+      <strong>${escapeHtml(item.chance_label)}</strong>
+    </article>
+  `).join('');
+}
+
+async function consultBuyerTickets(event) {
+  event.preventDefault();
+  const formData = new FormData(buyerForm);
+  const whatsapp = String(formData.get('whatsapp') || '').trim();
+
+  renderBuyerLoading();
+
+  try {
+    const response = await fetch('/api/v1/comprador/consultar', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ whatsapp }),
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error?.message || 'Nao foi possivel consultar suas cotas.');
+    }
+
+    renderBuyerResults(Array.isArray(payload.data) ? payload.data : []);
+  } catch (error) {
+    buyerResults.innerHTML = `<p class="buyer-empty">${escapeHtml(error.message)}</p>`;
+  }
+}
+
 renderNumbers();
 updateTotals();
 loadSalesTicker();
 listenSalesTickerStream();
 setInterval(loadSalesTicker, 30000);
+
+openBuyerArea.addEventListener('click', openBuyerModal);
+closeBuyerArea.addEventListener('click', closeBuyerModal);
+buyerModal.addEventListener('click', (event) => {
+  if (event.target === buyerModal) {
+    closeBuyerModal();
+  }
+});
+buyerForm.addEventListener('submit', consultBuyerTickets);

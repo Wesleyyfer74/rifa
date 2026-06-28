@@ -1,6 +1,7 @@
 const { Router } = require('express');
 
 const campanhasRoutes = require('./public/campanhas.routes');
+const compradorRoutes = require('./public/comprador.routes');
 const pedidosRoutes = require('./public/pedidos.routes');
 const webhooksRoutes = require('./public/webhooks.routes');
 const adminRoutes = require('./admin/admin.routes');
@@ -8,6 +9,7 @@ const adminRoutes = require('./admin/admin.routes');
 const router = Router();
 
 router.use('/v1/campanhas', campanhasRoutes);
+router.use('/v1/comprador', compradorRoutes);
 router.use('/v1/pedidos', pedidosRoutes);
 router.use('/v1/campanha', campanhasRoutes);
 router.use('/v1/pedido', pedidosRoutes);
