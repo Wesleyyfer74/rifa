@@ -55,7 +55,7 @@ model UsuarioCliente {
 
 model Campanha {
   id               String          @id @default(uuid()) @db.Uuid
-  usuarioClienteId String          @map("usuario_cliente_id") @db.Uuid
+  usuarioClienteId String          @map("usuario_id") @db.Uuid
   titulo           String          @db.VarChar(180)
   slug             String          @unique @db.VarChar(180)
   descricao        String?         @db.Text
@@ -104,10 +104,10 @@ model Pedido {
   id                String          @id @default(uuid()) @db.Uuid
   campanhaId        String          @map("campanha_id") @db.Uuid
   rifinhaId         String?         @map("rifinha_id") @db.Uuid
-  compradorNome     String          @map("comprador_nome") @db.VarChar(160)
-  compradorWhatsapp String          @map("comprador_whatsapp") @db.VarChar(30)
+  compradorNome     String          @map("nome_comprador") @db.VarChar(160)
+  compradorWhatsapp String          @map("whatsapp_comprador") @db.VarChar(30)
   compradorEmail    String?         @map("comprador_email") @db.VarChar(180)
-  cotasReservadas   Int[]           @map("cotas_reservadas")
+  cotasReservadas   Int[]           @map("cotas")
   statusPagamento   StatusPagamento @default(pendente) @map("status_pagamento")
   valorTotal        Decimal         @map("valor_total") @db.Decimal(10, 2)
   pixCopiaCola      String?         @map("pix_copia_cola") @db.Text
