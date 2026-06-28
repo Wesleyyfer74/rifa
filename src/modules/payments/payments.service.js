@@ -1,6 +1,8 @@
 const prisma = require('../../database/prisma');
 const mercadoPago = require('./mercado-pago.provider');
 const { env } = require('../../config/env');
+const { emitPedidoPago } = require('../esteira/esteira.events');
+const { presentEsteiraPedido } = require('../esteira/esteira.presenter');
 const { HttpError } = require('../../utils/http-error');
 
 function ensureAllowedIp(req) {
@@ -45,7 +47,10 @@ async function markPedidoAsPaid({ gatewayPaymentId, gatewayPayload }) {
   return prisma.$transaction(async (tx) => {
     const pedido = await tx.pedido.findUnique({
       where: { gatewayPaymentId: String(gatewayPaymentId) },
-      include: { cotas: true },
+      include: {
+        campanha: true,
+        cotas: true,
+      },
     });
 
     if (!pedido) {
@@ -75,6 +80,7 @@ async function markPedidoAsPaid({ gatewayPaymentId, gatewayPayload }) {
         gatewayPayload,
       },
       include: {
+        campanha: true,
         cotas: {
           orderBy: { numero: 'asc' },
         },
@@ -122,6 +128,10 @@ async function handleWebhook(req) {
 
 async function notifyPaymentConfirmed(pedido) {
   // Futuro ponto de integracao: WhatsApp/SMS/email.
+  if (pedido.campanha?.slug) {
+    emitPedidoPago(pedido.campanha.slug, presentEsteiraPedido(pedido));
+  }
+
   console.log(`[payments] Pagamento confirmado para pedido ${pedido.id}.`);
 }
 

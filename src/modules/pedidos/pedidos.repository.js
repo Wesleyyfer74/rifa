@@ -81,9 +81,37 @@ function listForAdmin(filters = {}, client = prisma) {
   });
 }
 
+function listLatestPaidByCampaignSlug(slug, limit = 10, client = prisma) {
+  return client.pedido.findMany({
+    where: {
+      statusPagamento: 'pago',
+      campanha: {
+        slug,
+      },
+    },
+    orderBy: [
+      { paidAt: 'desc' },
+      { updatedAt: 'desc' },
+      { createdAt: 'desc' },
+    ],
+    take: limit,
+    include: {
+      campanha: {
+        select: {
+          id: true,
+          slug: true,
+          titulo: true,
+          totalCotas: true,
+        },
+      },
+    },
+  });
+}
+
 module.exports = {
   create,
   findById,
   findOpenByCampaignAndCotas,
   listForAdmin,
+  listLatestPaidByCampaignSlug,
 };

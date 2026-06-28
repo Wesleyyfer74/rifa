@@ -131,6 +131,37 @@ Resposta:
 }
 ```
 
+### Esteira de vendas da campanha
+
+```http
+GET /api/v1/campanhas/:slug/esteira
+```
+
+Retorna os ultimos 10 pedidos pagos da campanha para prova social na landing page.
+
+Resposta:
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "comprador": "Felipe A.",
+      "percentual": 0.6,
+      "percentual_label": "0,6%",
+      "cotas": 60,
+      "timestamp": "2026-06-28T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+Endpoint SSE preparado para atualizacoes em tempo real quando um webhook marcar pedido como pago:
+
+```http
+GET /api/v1/campanhas/:slug/esteira/stream
+```
+
 ## Concorrencia
 
 A reserva usa a tabela `cotas_campanha` com chave unica por `campanha_id + numero`.

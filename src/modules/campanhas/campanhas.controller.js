@@ -1,6 +1,9 @@
 const prisma = require('../../database/prisma');
 const campanhasRepository = require('./campanhas.repository');
 const cotasRepository = require('../cotas/cotas.repository');
+const pedidosRepository = require('../pedidos/pedidos.repository');
+const { onPedidoPago } = require('../esteira/esteira.events');
+const { presentEsteiraPedido } = require('../esteira/esteira.presenter');
 const { HttpError } = require('../../utils/http-error');
 const { slugify } = require('../../utils/slugify');
 const {
@@ -78,6 +81,44 @@ async function getPublicBySlug(req, res, next) {
     });
 
     return res.json({ data });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function getEsteiraBySlug(req, res, next) {
+  try {
+    const { slug } = parseOrThrow(getCampanhaBySlugParams, req.params);
+    const pedidos = await pedidosRepository.listLatestPaidByCampaignSlug(slug, 10);
+
+    return res.json({
+      data: pedidos.map(presentEsteiraPedido),
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function streamEsteiraBySlug(req, res, next) {
+  try {
+    const { slug } = parseOrThrow(getCampanhaBySlugParams, req.params);
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    res.write('event: ready\n');
+    res.write(`data: ${JSON.stringify({ slug })}\n\n`);
+
+    const unsubscribe = onPedidoPago(slug, (payload) => {
+      res.write('event: pedido-pago\n');
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    });
+
+    req.on('close', unsubscribe);
   } catch (error) {
     return next(error);
   }
@@ -232,6 +273,8 @@ async function remove(req, res, next) {
 module.exports = {
   listPublic,
   getPublicBySlug,
+  getEsteiraBySlug,
+  streamEsteiraBySlug,
   listByOwner,
   listAdmin,
   create,

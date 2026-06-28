@@ -2,8 +2,11 @@ const numbersGrid = document.querySelector('#numbersGrid');
 const selectedCount = document.querySelector('#selectedCount');
 const selectedTotal = document.querySelector('#selectedTotal');
 const cartBadge = document.querySelector('.cart-link span');
+const salesTicker = document.querySelector('.sales-ticker');
+const salesTickerText = document.querySelector('#salesTickerText');
 const selected = new Set([1, 2, 3, 13, 14]);
 const price = 10;
+let latestEsteiraText = '';
 
 function formatMoney(value) {
   return value.toLocaleString('pt-BR', {
@@ -54,5 +57,83 @@ function renderNumbers() {
   }
 }
 
+function formatPercent(value) {
+  const number = Number(value || 0);
+
+  if (Number.isInteger(number)) {
+    return String(number);
+  }
+
+  return number.toFixed(1);
+}
+
+function buildTickerText(items) {
+  return items
+    .map((item) => `${item.comprador} adquiriu ${formatPercent(item.percentual)}% de cotas`)
+    .join(' > ');
+}
+
+function setTickerText(text) {
+  if (!salesTicker || !salesTickerText || !text || text === latestEsteiraText) {
+    return;
+  }
+
+  latestEsteiraText = text;
+  salesTickerText.textContent = `${text} > ${text}`;
+  salesTicker.classList.add('has-sales');
+}
+
+async function loadSalesTicker() {
+  if (!salesTicker || !salesTickerText) {
+    return;
+  }
+
+  const slug = salesTicker.dataset.campaignSlug;
+
+  try {
+    const response = await fetch(`/api/v1/campanhas/${slug}/esteira`, {
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao carregar esteira.');
+    }
+
+    const payload = await response.json();
+    const items = Array.isArray(payload.data) ? payload.data : [];
+
+    if (items.length === 0) {
+      salesTicker.classList.remove('has-sales');
+      salesTickerText.textContent = 'Aguardando primeiras compras confirmadas...';
+      return;
+    }
+
+    setTickerText(buildTickerText(items));
+  } catch (error) {
+    salesTicker.classList.remove('has-sales');
+    salesTickerText.textContent = 'Compras recentes serão exibidas em instantes.';
+  }
+}
+
+function listenSalesTickerStream() {
+  if (!salesTicker || !window.EventSource) {
+    return;
+  }
+
+  const slug = salesTicker.dataset.campaignSlug;
+  const source = new EventSource(`/api/v1/campanhas/${slug}/esteira/stream`);
+
+  source.addEventListener('pedido-pago', () => {
+    loadSalesTicker();
+  });
+
+  source.addEventListener('error', () => {
+    source.close();
+  });
+}
+
 renderNumbers();
 updateTotals();
+loadSalesTicker();
+listenSalesTickerStream();
+setInterval(loadSalesTicker, 30000);
