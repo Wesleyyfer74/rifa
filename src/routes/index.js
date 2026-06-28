@@ -1,5 +1,6 @@
 const { Router } = require('express');
 
+const authRoutes = require('./public/auth.routes');
 const campanhasRoutes = require('./public/campanhas.routes');
 const compradorRoutes = require('./public/comprador.routes');
 const pedidosRoutes = require('./public/pedidos.routes');
@@ -8,6 +9,7 @@ const adminRoutes = require('./admin/admin.routes');
 
 const router = Router();
 
+router.use('/v1/auth', authRoutes);
 router.use('/v1/campanhas', campanhasRoutes);
 router.use('/v1/comprador', compradorRoutes);
 router.use('/v1/pedidos', pedidosRoutes);

@@ -1,5 +1,6 @@
 const prisma = require('../../database/prisma');
 const campanhasRepository = require('./campanhas.repository');
+const authRepository = require('../auth/auth.repository');
 const cotasRepository = require('../cotas/cotas.repository');
 const pedidosRepository = require('../pedidos/pedidos.repository');
 const { onPedidoPago } = require('../esteira/esteira.events');
@@ -137,6 +138,7 @@ async function listAdmin(req, res, next) {
   try {
     const campanhas = await campanhasRepository.listAdmin({
       usuarioClienteId: req.query.usuario_id || req.query.usuarioClienteId,
+      administradorId: req.admin_id,
       status: req.query.status,
     });
 
@@ -168,11 +170,22 @@ async function create(req, res, next) {
       rifinhas = [],
     } = req.body;
 
-    const ownerId = usuarioClienteId || usuario_id;
+    let ownerId = usuarioClienteId || usuario_id;
     const quotaValue = valorCota ?? valor_cota;
     const quotaTotal = totalCotas ?? total_cotas;
     const imageUrl = imagemUrl ?? imagem_url;
     const drawDate = dataSorteio ?? data_sorteio;
+
+    if (req.admin && !ownerId) {
+      const mirrorOwner = await authRepository.findOrCreateOwnerMirror({
+        id: req.admin.id,
+        nome: req.admin.nome,
+        email: req.admin.email,
+        whatsapp: req.admin.whatsapp,
+        password: 'admin-auth-managed',
+      });
+      ownerId = mirrorOwner.id;
+    }
 
     if (!ownerId || !titulo || !quotaValue || !quotaTotal) {
       throw new HttpError(422, 'usuarioClienteId, titulo, valorCota e totalCotas sao obrigatorios.');
@@ -180,6 +193,7 @@ async function create(req, res, next) {
 
     const campanha = await campanhasRepository.create({
       usuarioClienteId: ownerId,
+      administradorId: req.admin_id,
       titulo,
       slug: slug || slugify(titulo),
       descricao,
@@ -253,6 +267,14 @@ async function update(req, res, next) {
       throw new HttpError(422, 'Informe pelo menos um campo para atualizar.');
     }
 
+    if (req.admin_id) {
+      const ownedCampanha = await campanhasRepository.findByIdForAdmin(req.params.id, req.admin_id);
+
+      if (!ownedCampanha) {
+        throw new HttpError(404, 'Campanha nao encontrada para este administrador.');
+      }
+    }
+
     const campanha = await campanhasRepository.update(req.params.id, data);
 
     return res.json({ data: campanha });
@@ -263,6 +285,14 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
   try {
+    if (req.admin_id) {
+      const ownedCampanha = await campanhasRepository.findByIdForAdmin(req.params.id, req.admin_id);
+
+      if (!ownedCampanha) {
+        throw new HttpError(404, 'Campanha nao encontrada para este administrador.');
+      }
+    }
+
     await campanhasRepository.remove(req.params.id);
     return res.status(204).send();
   } catch (error) {

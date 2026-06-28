@@ -91,6 +91,7 @@ async function listAdmin(req, res, next) {
     const pedidos = await pedidosRepository.listForAdmin({
       campanhaId: req.query.campanha_id,
       statusPagamento: req.query.status_pagamento,
+      administradorId: req.admin_id,
       limit: req.query.limit ? Number(req.query.limit) : 100,
     });
 

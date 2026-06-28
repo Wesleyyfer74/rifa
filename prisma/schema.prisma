@@ -54,9 +54,24 @@ model UsuarioCliente {
   @@map("usuarios_clientes")
 }
 
+model Administrador {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String   @db.VarChar(160)
+  email     String   @unique @db.VarChar(180)
+  password  String   @db.VarChar(255)
+  whatsapp  String?  @db.VarChar(30)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  campanhas Campanha[]
+
+  @@map("administradores")
+}
+
 model Campanha {
   id               String          @id @default(uuid()) @db.Uuid
   usuarioClienteId String          @map("usuario_id") @db.Uuid
+  administradorId  String?         @map("admin_id") @db.Uuid
   titulo           String          @db.VarChar(180)
   slug             String          @unique @db.VarChar(180)
   descricao        String?         @db.Text
@@ -71,11 +86,13 @@ model Campanha {
   updatedAt        DateTime        @updatedAt @map("updated_at")
 
   usuarioCliente UsuarioCliente @relation(fields: [usuarioClienteId], references: [id], onDelete: Cascade)
+  administrador  Administrador? @relation(fields: [administradorId], references: [id], onDelete: SetNull)
   rifinhas       Rifinha[]
   pedidos        Pedido[]
   cotas          CotaCampanha[]
 
   @@index([usuarioClienteId])
+  @@index([administradorId])
   @@index([status])
   @@map("campanhas")
 }

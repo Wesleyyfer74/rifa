@@ -8,6 +8,55 @@ Base path:
 
 ## Publico
 
+### Autenticacao do administrador
+
+```http
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+```
+
+Registro:
+
+```json
+{
+  "nome": "Wesley Cliente",
+  "email": "wesley@cliente.com",
+  "password": "senha-segura-123",
+  "whatsapp": "65999999999"
+}
+```
+
+Login:
+
+```json
+{
+  "email": "wesley@cliente.com",
+  "password": "senha-segura-123"
+}
+```
+
+Resposta:
+
+```json
+{
+  "data": {
+    "admin": {
+      "id": "uuid",
+      "nome": "Wesley Cliente",
+      "email": "wesley@cliente.com",
+      "whatsapp": "65999999999"
+    },
+    "token": "jwt"
+  }
+}
+```
+
+Use o token nas rotas do painel:
+
+```http
+Authorization: Bearer jwt
+```
+
 ### Detalhar campanha para pagina externa
 
 ```http
@@ -233,6 +282,9 @@ O endpoint valida a assinatura do Mercado Pago (`x-signature` + `x-request-id`) 
 
 ## Admin
 
+Todas as rotas abaixo exigem token JWT de administrador, exceto os aliases
+`POST /api/v1/admin/register` e `POST /api/v1/admin/login`.
+
 ### Registro e login do dono da rifa
 
 ```http
@@ -254,6 +306,8 @@ POST /api/v1/admin/campanhas
 PUT /api/v1/admin/campanhas/:id
 DELETE /api/v1/admin/campanhas/:id
 ```
+
+As consultas do painel sao filtradas automaticamente pelo `admin_id` do token.
 
 O `POST` aceita campos em `camelCase` ou `snake_case`:
 

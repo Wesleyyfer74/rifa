@@ -8,6 +8,7 @@ async function list(req, res, next) {
     const rifinhas = await rifinhasRepository.list({
       campanhaId: req.query.campanha_id || req.query.campanhaId,
       status: req.query.status,
+      administradorId: req.admin_id,
     });
 
     return res.json({ data: rifinhas });
@@ -28,10 +29,12 @@ async function create(req, res, next) {
     }
 
     const rifinha = await prisma.$transaction(async (tx) => {
-      const campanha = await campanhasRepository.findById(campanhaId, tx);
+      const campanha = req.admin_id
+        ? await campanhasRepository.findByIdForAdmin(campanhaId, req.admin_id, tx)
+        : await campanhasRepository.findById(campanhaId, tx);
 
       if (!campanha) {
-        throw new HttpError(404, 'Campanha nao encontrada.');
+        throw new HttpError(404, 'Campanha nao encontrada para este administrador.');
       }
 
       return rifinhasRepository.create({
@@ -54,6 +57,14 @@ async function create(req, res, next) {
 
 async function remove(req, res, next) {
   try {
+    if (req.admin_id) {
+      const rifinha = await rifinhasRepository.findByIdForAdmin(req.params.id, req.admin_id);
+
+      if (!rifinha) {
+        throw new HttpError(404, 'Rifinha nao encontrada para este administrador.');
+      }
+    }
+
     await rifinhasRepository.remove(req.params.id);
     return res.status(204).send();
   } catch (error) {

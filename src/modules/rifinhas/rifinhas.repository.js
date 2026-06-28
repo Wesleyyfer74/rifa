@@ -11,6 +11,12 @@ function list(filters = {}, client = prisma) {
     where.status = filters.status;
   }
 
+  if (filters.administradorId) {
+    where.campanha = {
+      administradorId: filters.administradorId,
+    };
+  }
+
   return client.rifinha.findMany({
     where,
     orderBy: [{ ordem: 'asc' }, { createdAt: 'desc' }],
@@ -47,8 +53,20 @@ function remove(id, client = prisma) {
   });
 }
 
+function findByIdForAdmin(id, administradorId, client = prisma) {
+  return client.rifinha.findFirst({
+    where: {
+      id,
+      campanha: {
+        administradorId,
+      },
+    },
+  });
+}
+
 module.exports = {
   list,
   create,
+  findByIdForAdmin,
   remove,
 };

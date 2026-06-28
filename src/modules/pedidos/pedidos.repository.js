@@ -51,6 +51,12 @@ function listForAdmin(filters = {}, client = prisma) {
     where.statusPagamento = filters.statusPagamento;
   }
 
+  if (filters.administradorId) {
+    where.campanha = {
+      administradorId: filters.administradorId,
+    };
+  }
+
   return client.pedido.findMany({
     where,
     orderBy: { createdAt: 'desc' },

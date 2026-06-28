@@ -31,6 +31,10 @@ function listAdmin(filters = {}, client = prisma) {
     where.usuarioClienteId = filters.usuarioClienteId;
   }
 
+  if (filters.administradorId) {
+    where.administradorId = filters.administradorId;
+  }
+
   if (filters.status) {
     where.status = filters.status;
   }
@@ -86,6 +90,18 @@ function findById(id, client = prisma) {
   });
 }
 
+function findByIdForAdmin(id, administradorId, client = prisma) {
+  return client.campanha.findFirst({
+    where: {
+      id,
+      administradorId,
+    },
+    include: {
+      rifinhas: true,
+    },
+  });
+}
+
 function create(data, client = prisma) {
   return client.campanha.create({
     data,
@@ -118,6 +134,7 @@ module.exports = {
   findPublicBySlug,
   findBySlug,
   findById,
+  findByIdForAdmin,
   create,
   update,
   remove,
