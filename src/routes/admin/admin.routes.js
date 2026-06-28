@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const authController = require('../../modules/auth/auth.controller');
 const campanhasController = require('../../modules/campanhas/campanhas.controller');
+const dashboardController = require('../../modules/dashboard/dashboard.controller');
 const pedidosController = require('../../modules/pedidos/pedidos.controller');
 const rifinhasController = require('../../modules/rifinhas/rifinhas.controller');
 const usuariosController = require('../../modules/usuarios-clientes/usuarios-clientes.controller');
@@ -13,6 +14,7 @@ router.post('/login', authController.login);
 
 router.use(authenticateAdmin);
 
+router.get('/dashboard/stats', dashboardController.stats);
 router.post('/usuarios-clientes', usuariosController.create);
 router.get('/usuarios-clientes/:id/campanhas', campanhasController.listByOwner);
 router.get('/campanhas', campanhasController.listAdmin);

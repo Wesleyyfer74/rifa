@@ -348,3 +348,25 @@ Exemplo:
 GET /api/v1/admin/pedidos
 GET /api/v1/admin/pedidos?campanha_id=uuid&status_pagamento=pendente
 ```
+
+### Dashboard
+
+```http
+GET /api/v1/admin/dashboard/stats
+Authorization: Bearer jwt
+```
+
+Resposta:
+
+```json
+{
+  "data": {
+    "campanhas_ativas": 8,
+    "pedidos_hoje": 126,
+    "receita_pendente": 4280,
+    "receita_pendente_formatada": "R$ 4.280,00",
+    "cotas_vendidas": 18400,
+    "cotas_vendidas_formatada": "18.400"
+  }
+}
+```
