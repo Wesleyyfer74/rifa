@@ -79,6 +79,22 @@ function findAvailableByQuantity(campanhaId, quantidade, client = prisma) {
   });
 }
 
+async function listOccupiedNumbers(campanhaId, client = prisma) {
+  const cotas = await client.cotaCampanha.findMany({
+    where: {
+      campanhaId,
+      status: {
+        in: ['reservado', 'pago'],
+      },
+    },
+    select: {
+      numero: true,
+    },
+  });
+
+  return cotas.map((cota) => cota.numero);
+}
+
 function reserveNumbers({ campanhaId, pedidoId, numeros }, client = prisma) {
   return client.cotaCampanha.updateMany({
     where: {
@@ -99,5 +115,6 @@ module.exports = {
   releaseExpiredReservations,
   listByCampaign,
   findAvailableByQuantity,
+  listOccupiedNumbers,
   reserveNumbers,
 };

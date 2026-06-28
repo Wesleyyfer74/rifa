@@ -20,6 +20,8 @@ const reservarPedidoBody = z.object({
   compradorWhatsapp: whatsapp.optional(),
   compradorEmail: z.string().trim().email().max(180).optional(),
   quantidade: z.number().int().min(1).max(100).optional(),
+  quantidade_cotas: z.number().int().min(1).max(100).optional(),
+  quantidadeCotas: z.number().int().min(1).max(100).optional(),
   cotas: cotasArray.optional(),
   numeros: cotasArray.optional(),
   cotasReservadas: cotasArray.optional(),
@@ -37,13 +39,18 @@ const reservarPedidoBody = z.object({
   }
 
   const selectedSources = [data.cotas, data.numeros, data.cotasReservadas].filter(Boolean).length;
+  const requestedQuantity = data.quantidade || data.quantidade_cotas || data.quantidadeCotas;
 
-  if (!data.quantidade && selectedSources === 0) {
+  if (!requestedQuantity && selectedSources === 0) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cotas'], message: 'Informe cotas ou quantidade.' });
   }
 
-  if (data.quantidade && selectedSources > 0) {
+  if (requestedQuantity && selectedSources > 0) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['quantidade'], message: 'Use quantidade ou cotas escolhidas, nao ambos.' });
+  }
+
+  if ([data.quantidade, data.quantidade_cotas, data.quantidadeCotas].filter(Boolean).length > 1) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['quantidade_cotas'], message: 'Use apenas um campo de quantidade.' });
   }
 
   if (selectedSources > 1) {

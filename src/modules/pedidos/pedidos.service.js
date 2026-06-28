@@ -1,4 +1,5 @@
 const { Prisma } = require('@prisma/client');
+const { randomInt } = require('crypto');
 const prisma = require('../../database/prisma');
 const campanhasRepository = require('../campanhas/campanhas.repository');
 const cotasRepository = require('../cotas/cotas.repository');
@@ -10,6 +11,54 @@ const MAX_TRANSACTION_RETRIES = 3;
 
 function normalizeNumbers(values) {
   return [...new Set(values.map(Number))].sort((a, b) => a - b);
+}
+
+function formatChancePercent(cotasCount, totalCotas) {
+  return `${((cotasCount / totalCotas) * 100).toFixed(2)}%`;
+}
+
+function sampleRandomAvailableNumbers({ totalCotas, occupiedNumbers, quantidade }) {
+  const occupied = new Set(occupiedNumbers);
+  const availableCount = totalCotas - occupied.size;
+
+  if (availableCount < quantidade) {
+    throw new HttpError(409, 'Nao existem cotas disponiveis suficientes.');
+  }
+
+  const selected = new Set();
+  const shouldUseDirectSampling = availableCount > quantidade * 4;
+  const maxAttempts = quantidade * 25;
+  let attempts = 0;
+
+  if (shouldUseDirectSampling) {
+    while (selected.size < quantidade && attempts < maxAttempts) {
+      attempts += 1;
+      const numero = randomInt(1, totalCotas + 1);
+
+      if (!occupied.has(numero)) {
+        selected.add(numero);
+      }
+    }
+
+    if (selected.size === quantidade) {
+      return normalizeNumbers([...selected]);
+    }
+  }
+
+  const available = [];
+
+  for (let numero = 1; numero <= totalCotas; numero += 1) {
+    if (!occupied.has(numero)) {
+      available.push(numero);
+    }
+  }
+
+  for (let index = available.length - 1; index > 0; index -= 1) {
+    const swapIndex = randomInt(0, index + 1);
+    [available[index], available[swapIndex]] = [available[swapIndex], available[index]];
+  }
+
+  return normalizeNumbers(available.slice(0, quantidade));
 }
 
 function isRetryablePrismaConflict(error) {
@@ -59,13 +108,13 @@ async function reservePendingOrder(input) {
     let numeros = input.numeros;
 
     if (input.quantidade) {
-      const available = await cotasRepository.findAvailableByQuantity(campanha.id, input.quantidade, tx);
+      const occupiedNumbers = await cotasRepository.listOccupiedNumbers(campanha.id, tx);
 
-      if (available.length < input.quantidade) {
-        throw new HttpError(409, 'Nao existem cotas disponiveis suficientes.');
-      }
-
-      numeros = available.map((cota) => cota.numero);
+      numeros = sampleRandomAvailableNumbers({
+        totalCotas: campanha.totalCotas,
+        occupiedNumbers,
+        quantidade: input.quantidade,
+      });
     }
 
     numeros = normalizeNumbers(numeros);
@@ -108,10 +157,18 @@ async function reservePendingOrder(input) {
       throw new HttpError(400, 'Uma ou mais cotas ja estao reservadas ou pagas.');
     }
 
-    return pedidosRepository.findById(pedido.id, tx);
+    const reservedPedido = await pedidosRepository.findById(pedido.id, tx);
+
+    return {
+      ...reservedPedido,
+      chancePercentual: Number(((numeros.length / campanha.totalCotas) * 100).toFixed(2)),
+      chancePercentualLabel: formatChancePercent(numeros.length, campanha.totalCotas),
+    };
   });
 }
 
 module.exports = {
+  formatChancePercent,
   reservePendingOrder,
+  sampleRandomAvailableNumbers,
 };

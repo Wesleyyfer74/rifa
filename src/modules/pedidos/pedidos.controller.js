@@ -17,7 +17,7 @@ async function reservar(req, res, next) {
       compradorNome: body.nome_comprador || body.nome || body.compradorNome,
       compradorWhatsapp: body.whatsapp_comprador || body.whatsapp || body.compradorWhatsapp,
       compradorEmail: body.compradorEmail,
-      quantidade: body.quantidade,
+      quantidade: body.quantidade || body.quantidade_cotas || body.quantidadeCotas,
       numeros: body.cotas || body.numeros || body.cotasReservadas,
     });
 
@@ -29,6 +29,9 @@ async function reservar(req, res, next) {
         campanha_id: pedido.campanhaId,
         status_pagamento: pedido.statusPagamento,
         cotas: pedido.cotasReservadas,
+        quantidade_cotas: pedido.cotasReservadas.length,
+        chance_percentual: pedido.chancePercentual,
+        chance_percentual_label: pedido.chancePercentualLabel,
         valor_total: Number(pedido.valorTotal),
         expires_at: pedido.expiresAt,
       },

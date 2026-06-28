@@ -86,9 +86,11 @@ Reserva automatica por quantidade:
   "campanha_id": "uuid",
   "nome_comprador": "Joao Silva",
   "whatsapp_comprador": "65999999999",
-  "quantidade": 5
+  "quantidade_cotas": 5
 }
 ```
+
+Alias tambem aceitos: `quantidade` e `quantidadeCotas`.
 
 Resposta:
 
@@ -101,6 +103,9 @@ Resposta:
     "campanha_id": "uuid",
     "status_pagamento": "pendente",
     "cotas": [1, 2, 3],
+    "quantidade_cotas": 3,
+    "chance_percentual": 0.03,
+    "chance_percentual_label": "0.03%",
     "valor_total": 30,
     "expires_at": "2026-06-27T19:45:00.000Z"
   }
