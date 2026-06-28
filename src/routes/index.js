@@ -9,6 +9,8 @@ const router = Router();
 
 router.use('/v1/campanhas', campanhasRoutes);
 router.use('/v1/pedidos', pedidosRoutes);
+router.use('/v1/campanha', campanhasRoutes);
+router.use('/v1/pedido', pedidosRoutes);
 router.use('/v1/webhooks', webhooksRoutes);
 router.use('/v1/admin', adminRoutes);
 

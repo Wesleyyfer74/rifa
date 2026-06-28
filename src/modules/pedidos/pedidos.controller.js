@@ -1,7 +1,6 @@
 const campanhasRepository = require('../campanhas/campanhas.repository');
 const pedidosRepository = require('./pedidos.repository');
 const pedidosService = require('./pedidos.service');
-const paymentsService = require('../payments/payments.service');
 const { HttpError } = require('../../utils/http-error');
 const {
   reservarPedidoBody,
@@ -13,29 +12,25 @@ async function reservar(req, res, next) {
   try {
     const body = parseOrThrow(reservarPedidoBody, req.body);
 
-    const pedidoPendente = await pedidosService.reservePendingOrder({
+    const pedido = await pedidosService.reservePendingOrder({
       campanhaId: body.campanha_id || body.campanhaId,
-      compradorNome: body.nome || body.compradorNome,
-      compradorWhatsapp: body.whatsapp || body.compradorWhatsapp,
+      compradorNome: body.nome_comprador || body.nome || body.compradorNome,
+      compradorWhatsapp: body.whatsapp_comprador || body.whatsapp || body.compradorWhatsapp,
       compradorEmail: body.compradorEmail,
       quantidade: body.quantidade,
-      numeros: body.numeros || body.cotasReservadas,
+      numeros: body.cotas || body.numeros || body.cotasReservadas,
     });
 
-    const pedido = await paymentsService.generatePixForPedido(pedidoPendente);
-
     return res.status(201).json({
+      success: true,
+      message: 'Reserva criada com sucesso.',
       data: {
         id: pedido.id,
         campanha_id: pedido.campanhaId,
-        gateway_provider: pedido.gatewayProvider,
-        gateway_payment_id: pedido.gatewayPaymentId,
         status_pagamento: pedido.statusPagamento,
-        cotas_reservadas: pedido.cotasReservadas,
+        cotas: pedido.cotasReservadas,
         valor_total: Number(pedido.valorTotal),
         expires_at: pedido.expiresAt,
-        pix_copia_cola: pedido.pixCopiaCola,
-        pix_qr_code: pedido.pixQrCode,
       },
     });
   } catch (error) {

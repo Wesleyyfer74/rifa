@@ -14,6 +14,12 @@ Base path:
 GET /api/v1/campanhas/:slug
 ```
 
+Alias tambem disponivel:
+
+```http
+GET /api/v1/campanha/:slug
+```
+
 Resposta:
 
 ```json
@@ -30,12 +36,16 @@ Resposta:
     "cotas": [
       {
         "numero": 1,
+        "label": "001",
         "status": "disponivel",
         "disponivel": true,
         "reservado": false,
         "pago": false
       }
     ],
+    "numeros_ocupados": [5, 12],
+    "numeros_reservados": [5],
+    "numeros_pagos": [12],
     "resumo_cotas": {
       "disponiveis": 9990,
       "reservadas": 5,
@@ -52,14 +62,20 @@ POST /api/v1/pedidos/reservar
 Content-Type: application/json
 ```
 
+Alias tambem disponivel:
+
+```http
+POST /api/v1/pedido/criar
+```
+
 Reserva por numeros escolhidos:
 
 ```json
 {
   "campanha_id": "uuid",
-  "nome": "Joao Silva",
-  "whatsapp": "65999999999",
-  "numeros": [1, 2, 3]
+  "nome_comprador": "Joao Silva",
+  "whatsapp_comprador": "65999999999",
+  "cotas": [1, 2, 3]
 }
 ```
 
@@ -68,8 +84,8 @@ Reserva automatica por quantidade:
 ```json
 {
   "campanha_id": "uuid",
-  "nome": "Joao Silva",
-  "whatsapp": "65999999999",
+  "nome_comprador": "Joao Silva",
+  "whatsapp_comprador": "65999999999",
   "quantidade": 5
 }
 ```
@@ -78,17 +94,15 @@ Resposta:
 
 ```json
 {
+  "success": true,
+  "message": "Reserva criada com sucesso.",
   "data": {
     "id": "uuid",
     "campanha_id": "uuid",
     "status_pagamento": "pendente",
-    "gateway_provider": "mercado_pago",
-    "gateway_payment_id": "123456789",
-    "cotas_reservadas": [1, 2, 3],
+    "cotas": [1, 2, 3],
     "valor_total": 30,
-    "expires_at": "2026-06-27T19:45:00.000Z",
-    "pix_copia_cola": "000201...",
-    "pix_qr_code": "iVBORw0KGgo..."
+    "expires_at": "2026-06-27T19:45:00.000Z"
   }
 }
 ```

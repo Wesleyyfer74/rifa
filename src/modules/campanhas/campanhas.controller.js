@@ -33,6 +33,9 @@ async function getPublicBySlug(req, res, next) {
       await cotasRepository.ensureCotas(campanha, tx);
 
       const cotas = await cotasRepository.listByCampaign(campanha.id, tx);
+      const numerosReservados = cotas.filter((cota) => cota.status === 'reservado').map((cota) => cota.numero);
+      const numerosPagos = cotas.filter((cota) => cota.status === 'pago').map((cota) => cota.numero);
+      const numerosOcupados = cotas.filter((cota) => cota.status === 'reservado' || cota.status === 'pago').map((cota) => cota.numero);
 
       return {
         id: campanha.id,
@@ -57,15 +60,19 @@ async function getPublicBySlug(req, res, next) {
         })),
         cotas: cotas.map((cota) => ({
           numero: cota.numero,
+          label: String(cota.numero).padStart(3, '0'),
           status: cota.status,
           disponivel: cota.status === 'disponivel',
           reservado: cota.status === 'reservado',
           pago: cota.status === 'pago',
         })),
+        numeros_ocupados: numerosOcupados,
+        numeros_reservados: numerosReservados,
+        numeros_pagos: numerosPagos,
         resumo_cotas: {
           disponiveis: cotas.filter((cota) => cota.status === 'disponivel').length,
-          reservadas: cotas.filter((cota) => cota.status === 'reservado').length,
-          pagas: cotas.filter((cota) => cota.status === 'pago').length,
+          reservadas: numerosReservados.length,
+          pagas: numerosPagos.length,
         },
       };
     });

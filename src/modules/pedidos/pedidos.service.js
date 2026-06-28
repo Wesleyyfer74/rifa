@@ -32,6 +32,10 @@ async function runSerializableWithRetry(callback) {
       lastError = error;
 
       if (!isRetryablePrismaConflict(error) || attempt === MAX_TRANSACTION_RETRIES) {
+        if (error.code === 'RESERVA_RETRY') {
+          throw new HttpError(400, 'Nao foi possivel reservar cotas automaticamente. Tente novamente.');
+        }
+
         throw error;
       }
     }
@@ -101,7 +105,7 @@ async function reservePendingOrder(input) {
         throw retryError;
       }
 
-      throw new HttpError(409, 'Uma ou mais cotas ja foram reservadas por outro comprador.');
+      throw new HttpError(400, 'Uma ou mais cotas ja estao reservadas ou pagas.');
     }
 
     return pedidosRepository.findById(pedido.id, tx);
