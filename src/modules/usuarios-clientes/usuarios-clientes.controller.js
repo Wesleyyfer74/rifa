@@ -22,4 +22,35 @@ async function create(req, res, next) {
   }
 }
 
-module.exports = { create };
+async function login(req, res, next) {
+  try {
+    const { email, senhaHash } = req.body;
+
+    if (!email || !senhaHash) {
+      throw new HttpError(422, 'email e senhaHash sao obrigatorios.');
+    }
+
+    const usuario = await usuariosRepository.findByEmail(email);
+
+    if (!usuario || usuario.senhaHash !== senhaHash) {
+      throw new HttpError(401, 'Credenciais invalidas.');
+    }
+
+    return res.json({
+      data: {
+        usuario: {
+          id: usuario.id,
+          nome: usuario.nome,
+          email: usuario.email,
+          whatsapp: usuario.whatsapp,
+          status: usuario.status,
+        },
+        token: `local-${usuario.id}`,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { create, login };

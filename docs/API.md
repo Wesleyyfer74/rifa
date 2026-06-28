@@ -155,3 +155,67 @@ POST /api/v1/webhooks/pagamento
 O endpoint valida a assinatura do Mercado Pago (`x-signature` + `x-request-id`) usando
 `MERCADO_PAGO_WEBHOOK_SECRET`. Quando o pagamento consultado no gateway estiver como
 `approved`, o pedido e suas cotas reservadas sao marcados como `pago`.
+
+## Admin
+
+### Registro e login do dono da rifa
+
+```http
+POST /api/v1/admin/register
+POST /api/v1/admin/login
+```
+
+Alias legado para registro:
+
+```http
+POST /api/v1/admin/usuarios-clientes
+```
+
+### Campanhas
+
+```http
+GET /api/v1/admin/campanhas
+POST /api/v1/admin/campanhas
+PUT /api/v1/admin/campanhas/:id
+DELETE /api/v1/admin/campanhas/:id
+```
+
+O `POST` aceita campos em `camelCase` ou `snake_case`:
+
+```json
+{
+  "usuario_id": "uuid",
+  "titulo": "R$50.000",
+  "slug": "rifa50k",
+  "valor_cota": 10,
+  "total_cotas": 10000,
+  "status": "ativo",
+  "imagem_url": "https://..."
+}
+```
+
+### Rifinhas
+
+```http
+GET /api/v1/admin/rifinhas
+POST /api/v1/admin/rifinhas
+DELETE /api/v1/admin/rifinhas/:id
+```
+
+Exemplo:
+
+```json
+{
+  "campanha_id": "uuid",
+  "titulo": "Rifinha de R$500",
+  "total_cotas": 1000,
+  "status": "ativo"
+}
+```
+
+### Pedidos
+
+```http
+GET /api/v1/admin/pedidos
+GET /api/v1/admin/pedidos?campanha_id=uuid&status_pagamento=pendente
+```

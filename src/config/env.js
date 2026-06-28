@@ -1,3 +1,5 @@
+const { cleanUrlValue, resolveDatabaseUrl } = require('./database-url');
+
 function parseAllowedOrigins(value) {
   if (!value || value.trim() === '') {
     return [];
@@ -7,20 +9,6 @@ function parseAllowedOrigins(value) {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-}
-
-function normalizeEnvUrl(value) {
-  if (!value || value.trim() === '') {
-    return value;
-  }
-
-  let normalized = value.trim();
-
-  if (normalized.includes('=') && !normalized.startsWith('postgres')) {
-    normalized = normalized.slice(normalized.indexOf('=') + 1).trim();
-  }
-
-  return normalized.replace(/^['"]|['"]$/g, '');
 }
 
 function requireEnv(name) {
@@ -34,23 +22,12 @@ function requireEnv(name) {
 }
 
 function validateDatabaseUrl() {
-  const databaseUrl = normalizeEnvUrl(process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL);
+  const databaseUrl = resolveDatabaseUrl(process.env);
 
   if (!databaseUrl || databaseUrl.trim() === '') {
-    throw new Error('Variavel de ambiente obrigatoria ausente: DATABASE_URL');
+    throw new Error('DATABASE_URL invalida. Configure uma URL PostgreSQL valida ou as variaveis PGHOST, PGPORT, PGUSER, PGPASSWORD e PGDATABASE.');
   }
 
-  try {
-    const url = new URL(databaseUrl);
-
-    if (!['postgresql:', 'postgres:'].includes(url.protocol)) {
-      throw new Error('invalid-protocol');
-    }
-  } catch (error) {
-    throw new Error('DATABASE_URL invalida. Use somente a URL PostgreSQL, sem o prefixo DATABASE_URL= e sem aspas.');
-  }
-
-  process.env.DATABASE_URL = databaseUrl;
   return databaseUrl;
 }
 
@@ -71,7 +48,7 @@ function validateRuntimeEnv() {
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 3000,
-  databaseUrl: normalizeEnvUrl(process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL),
+  databaseUrl: cleanUrlValue(process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL),
   jwtSecret: process.env.JWT_SECRET,
   appKey: process.env.APP_KEY,
   publicAppUrl: process.env.PUBLIC_APP_URL || 'http://localhost:3000',
@@ -85,6 +62,5 @@ const env = {
 module.exports = {
   env,
   parseAllowedOrigins,
-  normalizeEnvUrl,
   validateRuntimeEnv,
 };

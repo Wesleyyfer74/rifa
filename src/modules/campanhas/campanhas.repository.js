@@ -24,6 +24,34 @@ function listByOwner(usuarioClienteId, client = prisma) {
   });
 }
 
+function listAdmin(filters = {}, client = prisma) {
+  const where = {};
+
+  if (filters.usuarioClienteId) {
+    where.usuarioClienteId = filters.usuarioClienteId;
+  }
+
+  if (filters.status) {
+    where.status = filters.status;
+  }
+
+  return client.campanha.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      rifinhas: true,
+      pedidos: {
+        select: {
+          id: true,
+          statusPagamento: true,
+          valorTotal: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+}
+
 function findPublicBySlug(slug, client = prisma) {
   return client.campanha.findFirst({
     where: {
@@ -67,11 +95,30 @@ function create(data, client = prisma) {
   });
 }
 
+function update(id, data, client = prisma) {
+  return client.campanha.update({
+    where: { id },
+    data,
+    include: {
+      rifinhas: true,
+    },
+  });
+}
+
+function remove(id, client = prisma) {
+  return client.campanha.delete({
+    where: { id },
+  });
+}
+
 module.exports = {
   listPublic,
   listByOwner,
+  listAdmin,
   findPublicBySlug,
   findBySlug,
   findById,
   create,
+  update,
+  remove,
 };

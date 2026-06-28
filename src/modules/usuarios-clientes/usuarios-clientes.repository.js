@@ -13,7 +13,14 @@ function findById(id) {
   });
 }
 
+function findByEmail(email) {
+  return prisma.usuarioCliente.findUnique({
+    where: { email },
+  });
+}
+
 module.exports = {
   create,
   findById,
+  findByEmail,
 };

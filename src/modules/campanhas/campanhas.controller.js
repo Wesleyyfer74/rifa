@@ -92,47 +92,71 @@ async function listByOwner(req, res, next) {
   }
 }
 
+async function listAdmin(req, res, next) {
+  try {
+    const campanhas = await campanhasRepository.listAdmin({
+      usuarioClienteId: req.query.usuario_id || req.query.usuarioClienteId,
+      status: req.query.status,
+    });
+
+    return res.json({ data: campanhas });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function create(req, res, next) {
   try {
     const {
       usuarioClienteId,
+      usuario_id,
       titulo,
       slug,
       descricao,
       regulamento,
       valorCota,
+      valor_cota,
       totalCotas,
+      total_cotas,
       status = 'pausado',
       imagemUrl,
+      imagem_url,
       dataSorteio,
+      data_sorteio,
       metadata = {},
       rifinhas = [],
     } = req.body;
 
-    if (!usuarioClienteId || !titulo || !valorCota || !totalCotas) {
+    const ownerId = usuarioClienteId || usuario_id;
+    const quotaValue = valorCota ?? valor_cota;
+    const quotaTotal = totalCotas ?? total_cotas;
+    const imageUrl = imagemUrl ?? imagem_url;
+    const drawDate = dataSorteio ?? data_sorteio;
+
+    if (!ownerId || !titulo || !quotaValue || !quotaTotal) {
       throw new HttpError(422, 'usuarioClienteId, titulo, valorCota e totalCotas sao obrigatorios.');
     }
 
     const campanha = await campanhasRepository.create({
-      usuarioClienteId,
+      usuarioClienteId: ownerId,
       titulo,
       slug: slug || slugify(titulo),
       descricao,
       regulamento,
-      valorCota,
-      totalCotas,
+      valorCota: quotaValue,
+      totalCotas: quotaTotal,
       status,
-      imagemUrl,
-      dataSorteio: dataSorteio ? new Date(dataSorteio) : null,
+      imagemUrl: imageUrl,
+      dataSorteio: drawDate ? new Date(drawDate) : null,
       metadata,
       rifinhas: {
         create: rifinhas.map((rifinha, index) => ({
           titulo: rifinha.titulo,
           descricao: rifinha.descricao,
-          valorCota: rifinha.valorCota || valorCota,
-          totalCotas: rifinha.totalCotas || totalCotas,
+          valorCota: rifinha.valorCota || rifinha.valor_cota || quotaValue,
+          totalCotas: rifinha.totalCotas || rifinha.total_cotas || quotaTotal,
           status: rifinha.status || 'ativo',
-          imagemUrl: rifinha.imagemUrl,
+          imagemUrl: rifinha.imagemUrl || rifinha.imagem_url,
           ordem: rifinha.ordem ?? index,
         })),
       },
@@ -146,9 +170,71 @@ async function create(req, res, next) {
   }
 }
 
+async function update(req, res, next) {
+  try {
+    const data = {};
+    const allowedFields = [
+      'titulo',
+      'descricao',
+      'regulamento',
+      'status',
+      'metadata',
+    ];
+
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        data[field] = req.body[field];
+      }
+    });
+
+    if (req.body.slug !== undefined) {
+      data.slug = req.body.slug || slugify(req.body.titulo || '');
+    }
+
+    if (req.body.valorCota !== undefined || req.body.valor_cota !== undefined) {
+      data.valorCota = req.body.valorCota ?? req.body.valor_cota;
+    }
+
+    if (req.body.totalCotas !== undefined || req.body.total_cotas !== undefined) {
+      data.totalCotas = req.body.totalCotas ?? req.body.total_cotas;
+    }
+
+    if (req.body.imagemUrl !== undefined || req.body.imagem_url !== undefined) {
+      data.imagemUrl = req.body.imagemUrl ?? req.body.imagem_url;
+    }
+
+    if (req.body.dataSorteio !== undefined || req.body.data_sorteio !== undefined) {
+      const dataSorteio = req.body.dataSorteio ?? req.body.data_sorteio;
+      data.dataSorteio = dataSorteio ? new Date(dataSorteio) : null;
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new HttpError(422, 'Informe pelo menos um campo para atualizar.');
+    }
+
+    const campanha = await campanhasRepository.update(req.params.id, data);
+
+    return res.json({ data: campanha });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function remove(req, res, next) {
+  try {
+    await campanhasRepository.remove(req.params.id);
+    return res.status(204).send();
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   listPublic,
   getPublicBySlug,
   listByOwner,
+  listAdmin,
   create,
+  update,
+  remove,
 };

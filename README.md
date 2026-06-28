@@ -62,6 +62,18 @@ DATABASE_URL="postgresql://usuario:senha@host:5432/railway"
 
 Se estiver usando o banco Postgres dentro do mesmo projeto Railway, prefira a URL interna (`postgres.railway.internal`). Para rodar localmente fora do Railway, use a `DATABASE_PUBLIC_URL`.
 
+Fallback aceito pelo entrypoint caso a URL esteja ausente ou mal configurada:
+
+```env
+PGHOST=postgres.railway.internal
+PGPORT=5432
+PGUSER=postgres
+PGPASSWORD=sua-senha
+PGDATABASE=railway
+```
+
+O sistema monta internamente a `DATABASE_URL` para o Prisma a partir dessas variaveis.
+
 ### `JWT_SECRET`
 
 Chave secreta para assinatura de tokens JWT da API.
@@ -206,7 +218,16 @@ docker run --rm -p 3000:3000 --env-file .env rifa-do-cipriano
 - `POST /api/v1/pedidos/reservar`
 - `GET /api/v1/pedidos/status/:pedido_id`
 - `POST /api/v1/webhooks/pagamento`
+- `POST /api/v1/admin/register`
+- `POST /api/v1/admin/login`
 - `POST /api/v1/admin/usuarios-clientes`
+- `GET /api/v1/admin/campanhas`
 - `POST /api/v1/admin/campanhas`
+- `PUT /api/v1/admin/campanhas/:id`
+- `DELETE /api/v1/admin/campanhas/:id`
+- `GET /api/v1/admin/rifinhas`
+- `POST /api/v1/admin/rifinhas`
+- `DELETE /api/v1/admin/rifinhas/:id`
+- `GET /api/v1/admin/pedidos`
 
 Veja exemplos em [docs/API.md](docs/API.md).
