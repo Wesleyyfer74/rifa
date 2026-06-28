@@ -46,6 +46,22 @@ DATABASE_URL=${{Postgres.DATABASE_URL}}
 
 Se o servico do banco tiver outro nome, troque `Postgres` pelo nome correto.
 
+No Railway, cadastre apenas o valor da URL. Nao coloque `DATABASE_URL=` dentro do campo de valor e evite aspas manuais.
+
+Correto:
+
+```env
+postgresql://usuario:senha@host:5432/railway
+```
+
+Incorreto:
+
+```env
+DATABASE_URL="postgresql://usuario:senha@host:5432/railway"
+```
+
+Se estiver usando o banco Postgres dentro do mesmo projeto Railway, prefira a URL interna (`postgres.railway.internal`). Para rodar localmente fora do Railway, use a `DATABASE_PUBLIC_URL`.
+
 ### `JWT_SECRET`
 
 Chave secreta para assinatura de tokens JWT da API.

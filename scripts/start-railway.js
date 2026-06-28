@@ -4,16 +4,44 @@ const { spawn } = require('child_process');
 const MAX_ATTEMPTS = Number(process.env.DB_WAIT_ATTEMPTS || 60);
 const WAIT_INTERVAL_MS = Number(process.env.DB_WAIT_INTERVAL_MS || 2000);
 
+function normalizeEnvUrl(value) {
+  if (!value) {
+    return '';
+  }
+
+  let normalized = value.trim();
+
+  if (normalized.includes('=') && !normalized.startsWith('postgres')) {
+    normalized = normalized.slice(normalized.indexOf('=') + 1).trim();
+  }
+
+  return normalized.replace(/^['"]|['"]$/g, '');
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function parseDatabaseUrl() {
-  if (!process.env.DATABASE_URL) {
+  const databaseUrl = normalizeEnvUrl(process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL);
+
+  if (!databaseUrl) {
     throw new Error('DATABASE_URL nao configurada.');
   }
 
-  const url = new URL(process.env.DATABASE_URL);
+  let url;
+
+  try {
+    url = new URL(databaseUrl);
+  } catch (error) {
+    throw new Error('DATABASE_URL invalida. Use somente a URL PostgreSQL, sem o prefixo DATABASE_URL= e sem aspas.');
+  }
+
+  if (!['postgresql:', 'postgres:'].includes(url.protocol)) {
+    throw new Error('DATABASE_URL invalida. O protocolo precisa ser postgresql:// ou postgres://.');
+  }
+
+  process.env.DATABASE_URL = databaseUrl;
 
   return {
     host: url.hostname,
