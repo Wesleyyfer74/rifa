@@ -1,6 +1,6 @@
 const net = require('net');
 const { spawn } = require('child_process');
-const { resolveDatabaseUrl } = require('../src/config/database-url');
+const { describeDatabaseEnv, resolveDatabaseUrl } = require('../src/config/database-url');
 
 const MAX_ATTEMPTS = Number(process.env.DB_WAIT_ATTEMPTS || 60);
 const WAIT_INTERVAL_MS = Number(process.env.DB_WAIT_INTERVAL_MS || 2000);
@@ -13,7 +13,9 @@ function parseDatabaseUrl() {
   const databaseUrl = resolveDatabaseUrl(process.env);
 
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL invalida. Configure uma URL PostgreSQL valida ou as variaveis PGHOST, PGPORT, PGUSER, PGPASSWORD e PGDATABASE.');
+    console.error(`[entrypoint] Diagnostico DATABASE_URL: ${describeDatabaseEnv(process.env)}`);
+    console.error('[entrypoint] No Railway, configure DATABASE_URL como referencia do servico Postgres: ${{Postgres.DATABASE_URL}}');
+    throw new Error('DATABASE_URL invalida. O servico da aplicacao nao recebeu uma conexao PostgreSQL valida.');
   }
 
   const url = new URL(databaseUrl);

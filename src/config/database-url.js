@@ -25,6 +25,41 @@ function isValidPostgresUrl(value) {
   }
 }
 
+function describeDatabaseEnv(env = process.env) {
+  const databaseUrl = cleanUrlValue(env.DATABASE_URL);
+  const publicDatabaseUrl = cleanUrlValue(env.DATABASE_PUBLIC_URL);
+  const pgVars = ['PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD', 'PGDATABASE'];
+  const postgresVars = ['POSTGRES_HOST', 'POSTGRES_PORT', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_DB'];
+  const presentPgVars = pgVars.filter((name) => Boolean(env[name]));
+  const presentPostgresVars = postgresVars.filter((name) => Boolean(env[name]));
+
+  if (databaseUrl && isValidPostgresUrl(databaseUrl)) {
+    return 'DATABASE_URL esta presente e tem protocolo PostgreSQL valido.';
+  }
+
+  if (publicDatabaseUrl && isValidPostgresUrl(publicDatabaseUrl)) {
+    return 'DATABASE_PUBLIC_URL esta presente e tem protocolo PostgreSQL valido.';
+  }
+
+  if (databaseUrl && databaseUrl.includes('{{')) {
+    return 'DATABASE_URL parece uma referencia Railway nao resolvida. Use o botao Reference/Shared Variable para apontar para Postgres.DATABASE_URL.';
+  }
+
+  if (databaseUrl && /^https?:\/\//i.test(databaseUrl)) {
+    return 'DATABASE_URL parece ser uma URL de site/app. Ela precisa ser a URL do banco PostgreSQL.';
+  }
+
+  if (databaseUrl && !databaseUrl.includes('://')) {
+    return 'DATABASE_URL nao tem protocolo. Ela precisa comecar com postgresql:// ou postgres://.';
+  }
+
+  if (presentPgVars.length > 0 || presentPostgresVars.length > 0) {
+    return `Variaveis de banco encontradas: ${presentPgVars.concat(presentPostgresVars).join(', ')}. Ainda faltam dados para montar a conexao completa.`;
+  }
+
+  return 'Nenhuma URL PostgreSQL valida foi encontrada no servico da aplicacao.';
+}
+
 function buildUrlFromPgEnv(env = process.env) {
   const host = env.PGHOST || env.POSTGRES_HOST;
   const port = env.PGPORT || env.POSTGRES_PORT || 5432;
@@ -58,6 +93,7 @@ function resolveDatabaseUrl(env = process.env) {
 
 module.exports = {
   cleanUrlValue,
+  describeDatabaseEnv,
   resolveDatabaseUrl,
   isValidPostgresUrl,
 };
