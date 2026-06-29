@@ -56,8 +56,18 @@ function hideLoginModal() {
 }
 
 function renderAdminProfile() {
-  adminName.textContent = 'Administrador';
-  adminInitials.textContent = 'AD';
+  const admin = getStoredAdmin();
+  const name = admin?.nome || 'Administrador';
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'AD';
+
+  adminName.textContent = name;
+  adminInitials.textContent = initials;
 }
 
 function clearSession() {
