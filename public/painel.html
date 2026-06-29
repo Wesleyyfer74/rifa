@@ -270,23 +270,23 @@
       <form id="campaignForm" class="grid gap-5 p-6">
         <label class="grid gap-2">
           <span class="text-sm font-bold text-panel-muted">Título</span>
-          <input name="title" required maxlength="180" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: R$50.000">
+          <input name="titulo" required maxlength="180" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: R$50.000">
         </label>
 
         <label class="grid gap-2">
           <span class="text-sm font-bold text-panel-muted">Imagem</span>
-          <input name="image" required class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="https://...">
+          <input name="imagem" required accept="image/png,image/jpeg,image/webp,image/gif" type="file" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 py-3 text-sm font-semibold text-gold-50 outline-none file:mr-4 file:rounded-xl file:border-0 file:bg-gold-500 file:px-3 file:py-1 file:text-xs file:font-extrabold file:text-black focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
         </label>
 
         <div class="grid gap-5 md:grid-cols-2">
           <label class="grid gap-2">
             <span class="text-sm font-bold text-panel-muted">Valor da Cota</span>
-            <input name="price" required min="0.01" step="0.01" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10.00">
+            <input name="valor_cota" required min="0.01" step="0.01" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10.00">
           </label>
 
           <label class="grid gap-2">
             <span class="text-sm font-bold text-panel-muted">Quantidade Máxima de Cotas</span>
-            <input name="maxCotas" required min="1" step="1" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10000">
+            <input name="total_cotas" required min="1" step="1" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10000">
           </label>
         </div>
 

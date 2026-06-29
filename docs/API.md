@@ -311,17 +311,23 @@ As consultas do painel sao filtradas automaticamente pelo `admin_id` do token.
 
 O `POST` aceita campos em `camelCase` ou `snake_case`:
 
-```json
-{
-  "usuario_id": "uuid",
-  "titulo": "R$50.000",
-  "slug": "rifa50k",
-  "valor_cota": 10,
-  "total_cotas": 10000,
-  "status": "ativo",
-  "imagem_url": "https://..."
-}
+```http
+POST /api/v1/admin/campanhas
+Authorization: Bearer jwt
+Content-Type: multipart/form-data
 ```
+
+Campos:
+
+```text
+titulo=Rifei iPhone 15 Pro Max
+valor_cota=10.00
+total_cotas=10000
+imagem=@iphone.png
+```
+
+O backend gera o `slug` automaticamente, evita duplicidade e salva a campanha
+com `status=ativo`, vinculada ao `admin_id` do token.
 
 ### Rifinhas
 

@@ -6,6 +6,7 @@ const pedidosController = require('../../modules/pedidos/pedidos.controller');
 const rifinhasController = require('../../modules/rifinhas/rifinhas.controller');
 const usuariosController = require('../../modules/usuarios-clientes/usuarios-clientes.controller');
 const { authenticateAdmin } = require('../../middlewares/authenticate-admin');
+const { uploadCampaignImage } = require('../../middlewares/upload-campaign-image');
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get('/dashboard/stats', dashboardController.stats);
 router.post('/usuarios-clientes', usuariosController.create);
 router.get('/usuarios-clientes/:id/campanhas', campanhasController.listByOwner);
 router.get('/campanhas', campanhasController.listAdmin);
-router.post('/campanhas', campanhasController.create);
+router.post('/campanhas', uploadCampaignImage.single('imagem'), campanhasController.create);
 router.put('/campanhas/:id', campanhasController.update);
 router.delete('/campanhas/:id', campanhasController.remove);
 router.get('/rifinhas', rifinhasController.list);

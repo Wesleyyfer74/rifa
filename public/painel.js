@@ -1,4 +1,4 @@
-const campaigns = [
+let campaigns = [
   {
     title: 'Grande Rifa Do Cipriano',
     slug: 'grande-rifa-do-cipriano',
@@ -79,6 +79,16 @@ const template = document.querySelector('#campaignCardTemplate');
 const campaignModal = document.querySelector('#campaignModal');
 const campaignForm = document.querySelector('#campaignForm');
 
+function getAdminToken() {
+  return localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
+}
+
+function authHeaders() {
+  const token = getAdminToken();
+
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 function slugify(value) {
   return value
     .normalize('NFD')
@@ -107,6 +117,25 @@ function formatMoney(value) {
     style: 'currency',
     currency: 'BRL',
   });
+}
+
+function mapApiCampaign(campaign) {
+  const pedidos = Array.isArray(campaign.pedidos) ? campaign.pedidos : [];
+  const paidOrders = pedidos.filter((pedido) => pedido.statusPagamento === 'pago');
+  const sold = paidOrders.length;
+  const revenue = paidOrders.reduce((total, pedido) => total + Number(pedido.valorTotal || 0), 0);
+
+  return {
+    title: campaign.titulo,
+    slug: campaign.slug,
+    status: campaign.status === 'ativo' ? 'Ativo' : 'Pausado',
+    image: campaign.imagemUrl || 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80',
+    cotas: campaign.totalCotas || 0,
+    price: formatMoney(campaign.valorCota),
+    sold: sold.toLocaleString('pt-BR'),
+    orders: pedidos.length,
+    revenue: formatMoney(revenue),
+  };
 }
 
 function renderCampaigns(items) {
@@ -208,7 +237,9 @@ async function loadOrders() {
   `;
 
   try {
-    const response = await fetch('/api/v1/admin/pedidos?limit=50');
+    const response = await fetch('/api/v1/admin/pedidos?limit=50', {
+      headers: authHeaders(),
+    });
     if (!response.ok) throw new Error('Falha ao buscar pedidos');
     const payload = await response.json();
     renderOrders(payload.data || []);
@@ -217,6 +248,31 @@ async function loadOrders() {
   }
 
   lucide.createIcons();
+}
+
+async function loadCampaigns() {
+  const token = getAdminToken();
+
+  if (!token) {
+    renderCampaigns(campaigns);
+    renderOrderCampaigns();
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/v1/admin/campanhas', {
+      headers: authHeaders(),
+    });
+
+    if (!response.ok) throw new Error('Falha ao buscar campanhas');
+    const payload = await response.json();
+    campaigns = (payload.data || []).map(mapApiCampaign);
+  } catch (error) {
+    // Mantem o fallback local para o painel nao ficar vazio durante testes sem login.
+  }
+
+  renderCampaigns(campaigns);
+  renderOrderCampaigns();
 }
 
 function setActiveTab(tab) {
@@ -252,7 +308,7 @@ function filterCampaigns(value) {
 function openCampaignModal() {
   campaignModal.classList.remove('hidden');
   campaignModal.classList.add('flex');
-  campaignForm.elements.title.focus();
+  campaignForm.elements.titulo.focus();
 }
 
 function closeCampaignModal() {
@@ -261,29 +317,33 @@ function closeCampaignModal() {
   campaignForm.reset();
 }
 
-function createCampaignFromForm(event) {
+async function createCampaignFromForm(event) {
   event.preventDefault();
   const formData = new FormData(campaignForm);
-  const title = String(formData.get('title')).trim();
-  const image = String(formData.get('image')).trim();
-  const price = Number(formData.get('price'));
-  const cotas = Number(formData.get('maxCotas'));
 
-  campaigns.unshift({
-    title,
-    slug: slugify(title),
-    status: 'Ativo',
-    image,
-    cotas,
-    price: formatMoney(price),
-    sold: '0',
-    orders: 0,
-    revenue: formatMoney(0),
-  });
+  if (!getAdminToken()) {
+    alert('Faça login no painel antes de criar campanhas.');
+    return;
+  }
 
-  renderCampaigns(campaigns);
-  renderOrderCampaigns();
-  closeCampaignModal();
+  try {
+    const response = await fetch('/api/v1/admin/campanhas', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error?.message || 'Nao foi possivel criar campanha.');
+    }
+
+    closeCampaignModal();
+    await loadCampaigns();
+  } catch (error) {
+    alert(error.message);
+  }
 }
 
 navItems.forEach((item) => {
@@ -300,6 +360,5 @@ document.querySelector('#campaignModal').addEventListener('click', (event) => {
 campaignForm.addEventListener('submit', createCampaignFromForm);
 refreshOrdersButton.addEventListener('click', loadOrders);
 
-renderCampaigns(campaigns);
-renderOrderCampaigns();
+loadCampaigns();
 lucide.createIcons();

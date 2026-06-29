@@ -148,6 +148,19 @@ async function listAdmin(req, res, next) {
   }
 }
 
+async function buildUniqueSlug(title, requestedSlug) {
+  const baseSlug = slugify(requestedSlug || title);
+  let candidate = baseSlug;
+  let suffix = 2;
+
+  while (await campanhasRepository.findBySlug(candidate)) {
+    candidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+
+  return candidate;
+}
+
 async function create(req, res, next) {
   try {
     const {
@@ -161,7 +174,7 @@ async function create(req, res, next) {
       valor_cota,
       totalCotas,
       total_cotas,
-      status = 'pausado',
+      status,
       imagemUrl,
       imagem_url,
       dataSorteio,
@@ -173,8 +186,13 @@ async function create(req, res, next) {
     let ownerId = usuarioClienteId || usuario_id;
     const quotaValue = valorCota ?? valor_cota;
     const quotaTotal = totalCotas ?? total_cotas;
-    const imageUrl = imagemUrl ?? imagem_url;
+    const uploadedImageUrl = req.file ? `/uploads/campanhas/${req.file.filename}` : null;
+    const imageUrl = uploadedImageUrl || imagemUrl || imagem_url;
     const drawDate = dataSorteio ?? data_sorteio;
+
+    if (!uploadedImageUrl && req.admin_id) {
+      throw new HttpError(422, 'O arquivo de imagem e obrigatorio.');
+    }
 
     if (req.admin && !ownerId) {
       const mirrorOwner = await authRepository.findOrCreateOwnerMirror({
@@ -195,12 +213,12 @@ async function create(req, res, next) {
       usuarioClienteId: ownerId,
       administradorId: req.admin_id,
       titulo,
-      slug: slug || slugify(titulo),
+      slug: await buildUniqueSlug(titulo, slug),
       descricao,
       regulamento,
       valorCota: quotaValue,
       totalCotas: quotaTotal,
-      status,
+      status: status || 'ativo',
       imagemUrl: imageUrl,
       dataSorteio: drawDate ? new Date(drawDate) : null,
       metadata,
