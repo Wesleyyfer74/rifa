@@ -1,49 +1,4 @@
-let campaigns = [
-  {
-    title: 'Grande Rifa Do Cipriano',
-    slug: 'grande-rifa-do-cipriano',
-    status: 'Ativo',
-    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
-    cotas: 10000,
-    price: 'R$ 10,00',
-    sold: '6.482',
-    orders: 842,
-    revenue: 'R$ 64.820',
-  },
-  {
-    title: 'Rifa iPhone 15 Pro Max',
-    slug: 'rifa-iphone-15-pro-max',
-    status: 'Ativo',
-    image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=900&q=80',
-    cotas: 5000,
-    price: 'R$ 8,00',
-    sold: '2.194',
-    orders: 311,
-    revenue: 'R$ 17.552',
-  },
-  {
-    title: 'MacBook Pro Premiado',
-    slug: 'macbook-pro-premiado',
-    status: 'Pausado',
-    image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80',
-    cotas: 7000,
-    price: 'R$ 12,00',
-    sold: '1.090',
-    orders: 188,
-    revenue: 'R$ 13.080',
-  },
-  {
-    title: 'Pix da Sorte - R$ 5.000',
-    slug: 'pix-da-sorte-5000',
-    status: 'Ativo',
-    image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80',
-    cotas: 3000,
-    price: 'R$ 5,00',
-    sold: '2.870',
-    orders: 504,
-    revenue: 'R$ 14.350',
-  },
-];
+let campaigns = [];
 
 const fallbackOrders = [
   {
@@ -119,10 +74,22 @@ function formatMoney(value) {
   });
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 function mapApiCampaign(campaign) {
   const pedidos = Array.isArray(campaign.pedidos) ? campaign.pedidos : [];
   const paidOrders = pedidos.filter((pedido) => pedido.statusPagamento === 'pago');
-  const sold = paidOrders.length;
+  const sold = paidOrders.reduce((total, pedido) => {
+    const cotas = Array.isArray(pedido.cotasReservadas) ? pedido.cotasReservadas : [];
+    return total + cotas.length;
+  }, 0);
   const revenue = paidOrders.reduce((total, pedido) => total + Number(pedido.valorTotal || 0), 0);
 
   return {
@@ -140,6 +107,15 @@ function mapApiCampaign(campaign) {
 
 function renderCampaigns(items) {
   campaignGrid.innerHTML = '';
+
+  if (!items.length) {
+    campaignGrid.innerHTML = `
+      <div class="rounded-3xl border border-dashed border-gold-500/30 bg-panel-card p-8 text-center lg:col-span-3">
+        <p class="text-sm font-extrabold text-panel-muted">Nenhuma campanha criada ainda.</p>
+      </div>
+    `;
+    return;
+  }
 
   items.forEach((campaign) => {
     const node = template.content.cloneNode(true);
@@ -250,14 +226,25 @@ async function loadOrders() {
   lucide.createIcons();
 }
 
-async function loadCampaigns() {
+async function fetchAdminCampanhas() {
   const token = getAdminToken();
 
   if (!token) {
-    renderCampaigns(campaigns);
+    campaigns = [];
     renderOrderCampaigns();
+    campaignGrid.innerHTML = `
+      <div class="rounded-3xl border border-dashed border-gold-500/30 bg-panel-card p-8 text-center lg:col-span-3">
+        <p class="text-sm font-extrabold text-panel-muted">Faça login no painel para carregar suas campanhas.</p>
+      </div>
+    `;
     return;
   }
+
+  campaignGrid.innerHTML = `
+    <div class="rounded-3xl border border-panel-line bg-panel-card p-8 text-center lg:col-span-3">
+      <p class="text-sm font-extrabold text-panel-muted">Carregando campanhas...</p>
+    </div>
+  `;
 
   try {
     const response = await fetch('/api/v1/admin/campanhas', {
@@ -268,7 +255,14 @@ async function loadCampaigns() {
     const payload = await response.json();
     campaigns = (payload.data || []).map(mapApiCampaign);
   } catch (error) {
-    // Mantem o fallback local para o painel nao ficar vazio durante testes sem login.
+    campaigns = [];
+    campaignGrid.innerHTML = `
+      <div class="rounded-3xl border border-red-500/30 bg-panel-card p-8 text-center lg:col-span-3">
+        <p class="text-sm font-extrabold text-red-300">${escapeHtml(error.message)}</p>
+      </div>
+    `;
+    renderOrderCampaigns();
+    return;
   }
 
   renderCampaigns(campaigns);
@@ -340,7 +334,7 @@ async function createCampaignFromForm(event) {
     }
 
     closeCampaignModal();
-    await loadCampaigns();
+    await fetchAdminCampanhas();
   } catch (error) {
     alert(error.message);
   }
@@ -360,5 +354,5 @@ document.querySelector('#campaignModal').addEventListener('click', (event) => {
 campaignForm.addEventListener('submit', createCampaignFromForm);
 refreshOrdersButton.addEventListener('click', loadOrders);
 
-loadCampaigns();
+fetchAdminCampanhas();
 lucide.createIcons();

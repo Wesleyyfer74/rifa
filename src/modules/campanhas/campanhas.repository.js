@@ -48,6 +48,7 @@ function listAdmin(filters = {}, client = prisma) {
         select: {
           id: true,
           statusPagamento: true,
+          cotasReservadas: true,
           valorTotal: true,
           createdAt: true,
         },
