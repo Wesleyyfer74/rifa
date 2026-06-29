@@ -75,15 +75,15 @@ async function register(req, res, next) {
 
 async function login(req, res, next) {
   try {
-    const { email, password, senha } = req.body;
+    const { email, login: loginName, password, senha } = req.body;
     const plainPassword = password || senha;
-    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const loginIdentifier = String(loginName || email || '').trim();
 
-    if (!normalizedEmail || !plainPassword) {
-      throw new HttpError(422, 'email e password sao obrigatorios.');
+    if (!loginIdentifier || !plainPassword) {
+      throw new HttpError(422, 'login e password sao obrigatorios.');
     }
 
-    const admin = await authRepository.findAdministradorByEmail(normalizedEmail);
+    const admin = await authRepository.findAdministradorByLogin(loginIdentifier);
 
     if (!admin) {
       throw new HttpError(401, 'Credenciais invalidas.');

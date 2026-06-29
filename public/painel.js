@@ -44,7 +44,7 @@ function authHeaders() {
 function showLoginModal() {
   loginModal.classList.remove('hidden');
   loginModal.classList.add('flex');
-  loginForm.elements.email.focus();
+  loginForm.elements.login.focus();
 }
 
 function hideLoginModal() {
@@ -502,7 +502,7 @@ async function submitLogin(event) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: formData.get('email'),
+        login: formData.get('login'),
         password: formData.get('password'),
       }),
     });

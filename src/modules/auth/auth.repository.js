@@ -12,6 +12,19 @@ function findAdministradorByEmail(email, client = prisma) {
   });
 }
 
+function findAdministradorByLogin(login, client = prisma) {
+  const normalizedLogin = String(login || '').trim().toLowerCase();
+
+  return client.administrador.findFirst({
+    where: {
+      OR: [
+        { email: normalizedLogin },
+        { nome: { equals: String(login || '').trim(), mode: 'insensitive' } },
+      ],
+    },
+  });
+}
+
 function findAdministradorById(id, client = prisma) {
   return client.administrador.findUnique({
     where: { id },
@@ -37,6 +50,7 @@ function findOrCreateOwnerMirror(admin, client = prisma) {
 module.exports = {
   createAdministrador,
   findAdministradorByEmail,
+  findAdministradorByLogin,
   findAdministradorById,
   findOrCreateOwnerMirror,
 };
