@@ -33,6 +33,10 @@ const searchInput = document.querySelector('#campaignSearch');
 const template = document.querySelector('#campaignCardTemplate');
 const campaignModal = document.querySelector('#campaignModal');
 const campaignForm = document.querySelector('#campaignForm');
+const statActiveCampaigns = document.querySelector('#statActiveCampaigns');
+const statOrdersToday = document.querySelector('#statOrdersToday');
+const statPendingRevenue = document.querySelector('#statPendingRevenue');
+const statSoldQuotas = document.querySelector('#statSoldQuotas');
 
 function getAdminToken() {
   return localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
@@ -72,6 +76,39 @@ function formatMoney(value) {
     style: 'currency',
     currency: 'BRL',
   });
+}
+
+function formatCompactNumber(value) {
+  return Number(value || 0).toLocaleString('pt-BR', {
+    notation: Number(value || 0) >= 10000 ? 'compact' : 'standard',
+    maximumFractionDigits: 1,
+  });
+}
+
+function renderDashboardStats(stats = {}) {
+  statActiveCampaigns.textContent = Number(stats.campanhas_ativas || 0).toLocaleString('pt-BR');
+  statOrdersToday.textContent = Number(stats.pedidos_hoje || 0).toLocaleString('pt-BR');
+  statPendingRevenue.textContent = stats.receita_pendente_formatada || formatMoney(stats.receita_pendente || 0);
+  statSoldQuotas.textContent = stats.cotas_vendidas_formatada || formatCompactNumber(stats.cotas_vendidas || 0);
+}
+
+async function fetchDashboardStats() {
+  if (!getAdminToken()) {
+    renderDashboardStats();
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/v1/admin/dashboard/stats', {
+      headers: authHeaders(),
+    });
+
+    if (!response.ok) throw new Error('Falha ao buscar indicadores');
+    const payload = await response.json();
+    renderDashboardStats(payload.data || {});
+  } catch (error) {
+    renderDashboardStats();
+  }
 }
 
 function escapeHtml(value) {
@@ -334,6 +371,7 @@ async function createCampaignFromForm(event) {
     }
 
     closeCampaignModal();
+    await fetchDashboardStats();
     await fetchAdminCampanhas();
   } catch (error) {
     alert(error.message);
@@ -355,4 +393,5 @@ campaignForm.addEventListener('submit', createCampaignFromForm);
 refreshOrdersButton.addEventListener('click', loadOrders);
 
 fetchAdminCampanhas();
+fetchDashboardStats();
 lucide.createIcons();
