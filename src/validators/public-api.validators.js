@@ -7,7 +7,7 @@ const getCampanhaBySlugParams = z.object({
   slug: z.string().trim().min(3).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 }).strict();
 
-const cotasArray = z.array(z.number().int().min(1)).min(1).max(100);
+const cotasArray = z.array(z.number().int().min(1)).min(1).max(1000);
 
 const reservarPedidoBody = z.object({
   campanha_id: uuid.optional(),
@@ -19,9 +19,9 @@ const reservarPedidoBody = z.object({
   whatsapp: whatsapp.optional(),
   compradorWhatsapp: whatsapp.optional(),
   compradorEmail: z.string().trim().email().max(180).optional(),
-  quantidade: z.number().int().min(1).max(100).optional(),
-  quantidade_cotas: z.number().int().min(1).max(100).optional(),
-  quantidadeCotas: z.number().int().min(1).max(100).optional(),
+  quantidade: z.number().int().min(1).max(1000).optional(),
+  quantidade_cotas: z.number().int().min(1).max(1000).optional(),
+  quantidadeCotas: z.number().int().min(1).max(1000).optional(),
   cotas: cotasArray.optional(),
   numeros: cotasArray.optional(),
   cotasReservadas: cotasArray.optional(),

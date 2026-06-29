@@ -264,6 +264,10 @@ async function create(req, res, next) {
       throw new HttpError(422, 'max_cotas_por_pedido nao pode ser maior que total_cotas.');
     }
 
+    if (maxCotasPorPedido > 1000) {
+      throw new HttpError(422, 'max_cotas_por_pedido nao pode ser maior que 1000.');
+    }
+
     if (reservaExpiraMinutos < 5 || reservaExpiraMinutos > 1440) {
       throw new HttpError(422, 'reserva_expira_minutos precisa estar entre 5 e 1440.');
     }

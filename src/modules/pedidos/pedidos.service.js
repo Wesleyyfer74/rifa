@@ -6,7 +6,7 @@ const cotasRepository = require('../cotas/cotas.repository');
 const pedidosRepository = require('./pedidos.repository');
 const { HttpError } = require('../../utils/http-error');
 
-const RESERVA_EXPIRA_EM_MINUTOS = 15;
+const DEFAULT_RESERVA_EXPIRA_EM_MINUTOS = 15;
 const MAX_TRANSACTION_RETRIES = 3;
 
 function normalizeNumbers(values) {
@@ -15,6 +15,16 @@ function normalizeNumbers(values) {
 
 function formatChancePercent(cotasCount, totalCotas) {
   return `${((cotasCount / totalCotas) * 100).toFixed(2)}%`;
+}
+
+function getCampaignQuotaRules(campanha) {
+  const metadata = campanha.metadata && typeof campanha.metadata === 'object' ? campanha.metadata : {};
+
+  return {
+    reservaExpiraMinutos: Number(metadata.reserva_expira_minutos || DEFAULT_RESERVA_EXPIRA_EM_MINUTOS),
+    minCotasPorPedido: Number(metadata.min_cotas_por_pedido || 1),
+    maxCotasPorPedido: Number(metadata.max_cotas_por_pedido || 100),
+  };
 }
 
 function sampleRandomAvailableNumbers({ totalCotas, occupiedNumbers, quantidade }) {
@@ -103,6 +113,8 @@ async function reservePendingOrder(input) {
       throw new HttpError(404, 'Campanha ativa nao encontrada.');
     }
 
+    const rules = getCampaignQuotaRules(campanha);
+
     await cotasRepository.ensureCotas(campanha, tx);
 
     let numeros = input.numeros;
@@ -119,6 +131,14 @@ async function reservePendingOrder(input) {
 
     numeros = normalizeNumbers(numeros);
 
+    if (numeros.length < rules.minCotasPorPedido) {
+      throw new HttpError(422, `Pedido minimo de ${rules.minCotasPorPedido} cota(s).`);
+    }
+
+    if (numeros.length > rules.maxCotasPorPedido) {
+      throw new HttpError(422, `Pedido maximo de ${rules.maxCotasPorPedido} cota(s).`);
+    }
+
     const hasInvalidCota = numeros.some((numero) => numero < 1 || numero > campanha.totalCotas);
 
     if (hasInvalidCota) {
@@ -126,7 +146,7 @@ async function reservePendingOrder(input) {
     }
 
     const valorTotal = Number(campanha.valorCota) * numeros.length;
-    const expiresAt = new Date(Date.now() + RESERVA_EXPIRA_EM_MINUTOS * 60 * 1000);
+    const expiresAt = new Date(Date.now() + rules.reservaExpiraMinutos * 60 * 1000);
 
     const pedido = await tx.pedido.create({
       data: {

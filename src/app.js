@@ -39,6 +39,10 @@ app.get('/painel', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'painel.html'));
 });
 
+app.get('/rifa/:slug', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'campanha.html'));
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });

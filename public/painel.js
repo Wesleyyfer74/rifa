@@ -228,6 +228,7 @@ function mapApiCampaign(campaign) {
   return {
     title: campaign.titulo,
     slug: campaign.slug,
+    publicUrl: `/rifa/${campaign.slug}`,
     status: campaign.status === 'ativo' ? 'Ativo' : 'Pausado',
     image: campaign.imagemUrl || 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80',
     cotas: campaign.totalCotas || 0,
@@ -261,7 +262,28 @@ function renderCampaigns(items) {
     node.querySelector('.campaign-cotas').textContent = campaign.cotas.toLocaleString('pt-BR');
     node.querySelector('.campaign-price').textContent = campaign.price;
     node.querySelector('.campaign-sold').textContent = campaign.sold;
+    node.querySelector('.campaign-card .p-5').insertAdjacentHTML('beforeend', `
+      <div class="mt-5 grid grid-cols-2 gap-3">
+        <a class="inline-flex h-11 items-center justify-center rounded-2xl border border-gold-500/40 bg-gold-500/10 px-4 text-sm font-extrabold text-gold-300 hover:bg-gold-500/20" href="${campaign.publicUrl}" target="_blank" rel="noreferrer">Abrir pagina</a>
+        <button class="copy-campaign-link inline-flex h-11 items-center justify-center rounded-2xl border border-panel-line px-4 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button" data-url="${campaign.publicUrl}">Copiar link</button>
+      </div>
+    `);
     campaignGrid.appendChild(node);
+  });
+
+  campaignGrid.querySelectorAll('.copy-campaign-link').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const url = new URL(button.dataset.url, window.location.origin).href;
+      try {
+        await navigator.clipboard.writeText(url);
+        button.textContent = 'Copiado';
+        setTimeout(() => {
+          button.textContent = 'Copiar link';
+        }, 1600);
+      } catch (error) {
+        window.prompt('Copie o link da campanha:', url);
+      }
+    });
   });
 
   lucide.createIcons();

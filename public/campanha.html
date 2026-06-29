@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rifa Premium</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/campanha.css">
+</head>
+<body>
+  <header class="campaign-header">
+    <a class="campaign-brand" href="/">Rifa Premium</a>
+    <nav>
+      <a href="#comprar">Comprar cotas</a>
+      <a href="#regulamento">Regulamento</a>
+      <a href="#contato">Contato</a>
+    </nav>
+  </header>
+
+  <main class="campaign-shell">
+    <section id="campaignLoading" class="state-card">
+      <strong>Carregando campanha...</strong>
+      <span>Aguarde enquanto buscamos os dados da rifa.</span>
+    </section>
+
+    <section id="campaignError" class="state-card error hidden">
+      <strong>Campanha indisponivel</strong>
+      <span id="campaignErrorText">Nao foi possivel carregar esta rifa.</span>
+    </section>
+
+    <section id="campaignPage" class="hidden">
+      <section class="hero">
+        <div class="hero-media">
+          <img id="campaignImage" alt="">
+          <span id="campaignStatus" class="status-pill">Ativa</span>
+        </div>
+
+        <div class="hero-copy">
+          <p class="eyebrow">Campanha oficial</p>
+          <h1 id="campaignTitle">Rifa Premium</h1>
+          <p id="campaignPrize" class="prize"></p>
+          <p id="campaignDescription"></p>
+
+          <div class="hero-stats">
+            <article>
+              <span>Valor da cota</span>
+              <strong id="campaignPrice">R$ 0,00</strong>
+            </article>
+            <article>
+              <span>Total de cotas</span>
+              <strong id="campaignTotal">0</strong>
+            </article>
+            <article>
+              <span>Disponiveis</span>
+              <strong id="campaignAvailable">0</strong>
+            </article>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn btn-gold" href="#comprar">Comprar agora</a>
+            <button id="copyShareLink" class="btn btn-outline" type="button">Copiar link</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="sales-ticker" aria-label="Compras recentes">
+        <span>Compras recentes</span>
+        <p id="salesTickerText">Aguardando compras confirmadas...</p>
+      </section>
+
+      <section id="comprar" class="checkout-layout">
+        <div class="numbers-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Escolha suas cotas</p>
+              <h2>Selecione numeros ou compre no modo aleatorio</h2>
+            </div>
+            <span id="quotaRules"></span>
+          </div>
+
+          <div class="mode-tabs" role="tablist">
+            <button id="randomModeButton" class="active" type="button">Cotas aleatorias</button>
+            <button id="manualModeButton" type="button">Escolher numeros</button>
+          </div>
+
+          <div id="randomMode" class="mode-card">
+            <label>
+              <span>Quantidade de cotas</span>
+              <input id="randomQuantity" min="1" step="1" type="number" value="1">
+            </label>
+            <div class="quick-amounts" id="quickAmounts"></div>
+          </div>
+
+          <div id="manualMode" class="mode-card hidden">
+            <p id="manualHint">Digite numeros separados por virgula. Para rifas pequenas, voce tambem pode clicar na grade abaixo.</p>
+            <textarea id="manualNumbers" rows="3" placeholder="Ex: 12, 45, 108"></textarea>
+            <div id="numbersGrid" class="numbers-grid"></div>
+          </div>
+        </div>
+
+        <aside class="checkout-card">
+          <h2>Finalizar reserva</h2>
+          <form id="orderForm">
+            <label>
+              <span>Nome completo</span>
+              <input name="nome" required maxlength="160" placeholder="Seu nome">
+            </label>
+            <label>
+              <span>WhatsApp</span>
+              <input name="whatsapp" required inputmode="tel" maxlength="30" placeholder="(65) 99999-9999">
+            </label>
+            <label>
+              <span>Email opcional</span>
+              <input name="email" type="email" maxlength="180" placeholder="voce@email.com">
+            </label>
+
+            <div class="summary">
+              <div>
+                <span>Cotas</span>
+                <strong id="summaryCount">1</strong>
+              </div>
+              <div>
+                <span>Total</span>
+                <strong id="summaryTotal">R$ 0,00</strong>
+              </div>
+            </div>
+
+            <button class="btn btn-gold btn-full" type="submit">Reservar cotas</button>
+          </form>
+
+          <div id="orderResult" class="order-result hidden"></div>
+        </aside>
+      </section>
+
+      <section id="regulamento" class="details-grid">
+        <article>
+          <h2>Regulamento</h2>
+          <p id="campaignRules"></p>
+        </article>
+        <article>
+          <h2>Pagamento</h2>
+          <p id="paymentInstructions"></p>
+        </article>
+        <article id="contato">
+          <h2>Contato</h2>
+          <p id="supportContact"></p>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <script src="/campanha.js"></script>
+</body>
+</html>
