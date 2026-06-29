@@ -39,6 +39,9 @@ async function authenticateAdmin(req, res, next) {
       nome: admin.nome,
       email: admin.email,
       whatsapp: admin.whatsapp,
+      pix_chave: admin.pixChave,
+      pix_tipo: admin.pixTipo,
+      telefone_mensagens: admin.telefoneMensagens,
     };
     req.admin_id = admin.id;
 

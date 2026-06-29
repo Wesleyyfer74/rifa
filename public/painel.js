@@ -18,6 +18,9 @@ const statPendingRevenue = document.querySelector('#statPendingRevenue');
 const statSoldQuotas = document.querySelector('#statSoldQuotas');
 const adminInitials = document.querySelector('#adminInitials');
 const adminName = document.querySelector('#adminName');
+const profileButton = document.querySelector('#profileButton');
+const profileForm = document.querySelector('#profileForm');
+const profileFeedback = document.querySelector('#profileFeedback');
 const logoutButton = document.querySelector('#logoutButton');
 const loginModal = document.querySelector('#loginModal');
 const loginForm = document.querySelector('#loginForm');
@@ -70,6 +73,60 @@ function renderAdminProfile() {
   adminInitials.textContent = initials;
 }
 
+function showProfileFeedback(message, type = 'success') {
+  profileFeedback.textContent = message;
+  profileFeedback.classList.remove('hidden', 'border-red-500/30', 'bg-red-500/10', 'text-red-300', 'border-emerald-500/30', 'bg-emerald-500/10', 'text-emerald-300');
+
+  if (type === 'error') {
+    profileFeedback.classList.add('border-red-500/30', 'bg-red-500/10', 'text-red-300');
+    return;
+  }
+
+  profileFeedback.classList.add('border-emerald-500/30', 'bg-emerald-500/10', 'text-emerald-300');
+}
+
+function hideProfileFeedback() {
+  profileFeedback.classList.add('hidden');
+  profileFeedback.textContent = '';
+}
+
+function fillProfileForm(profile) {
+  profileForm.elements.nome.value = profile?.nome || '';
+  profileForm.elements.email.value = profile?.email || '';
+  profileForm.elements.whatsapp.value = profile?.whatsapp || '';
+  profileForm.elements.telefone_mensagens.value = profile?.telefone_mensagens || '';
+  profileForm.elements.pix_tipo.value = profile?.pix_tipo || '';
+  profileForm.elements.pix_chave.value = profile?.pix_chave || '';
+}
+
+async function fetchAdminProfile() {
+  if (!getAdminToken()) {
+    fillProfileForm({});
+    return null;
+  }
+
+  hideProfileFeedback();
+
+  try {
+    const response = await fetch('/api/v1/admin/perfil', {
+      headers: authHeaders(),
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error?.message || 'Nao foi possivel carregar o perfil.');
+    }
+
+    localStorage.setItem('admin_user', JSON.stringify(payload.data));
+    fillProfileForm(payload.data);
+    renderAdminProfile();
+    return payload.data;
+  } catch (error) {
+    showProfileFeedback(error.message, 'error');
+    return null;
+  }
+}
+
 function clearSession() {
   localStorage.removeItem('admin_token');
   localStorage.removeItem('token');
@@ -81,6 +138,8 @@ function clearSession() {
   renderCampaigns([]);
   renderRifinhas([]);
   renderOrders([]);
+  fillProfileForm({});
+  hideProfileFeedback();
   ordersCampaignList.innerHTML = '';
   showLoginModal();
 }
@@ -428,6 +487,10 @@ function setActiveTab(tab) {
   if (tab === 'rifinhas') {
     fetchAdminRifinhas();
   }
+
+  if (tab === 'perfil') {
+    fetchAdminProfile();
+  }
 }
 
 function filterCampaigns(value) {
@@ -487,6 +550,49 @@ async function createCampaignFromForm(event) {
   }
 }
 
+async function submitProfileForm(event) {
+  event.preventDefault();
+  hideProfileFeedback();
+
+  if (!getAdminToken()) {
+    showLoginModal();
+    return;
+  }
+
+  const formData = new FormData(profileForm);
+
+  try {
+    const response = await fetch('/api/v1/admin/perfil', {
+      method: 'PUT',
+      headers: {
+        ...authHeaders(),
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nome: formData.get('nome'),
+        email: formData.get('email'),
+        whatsapp: formData.get('whatsapp'),
+        telefone_mensagens: formData.get('telefone_mensagens'),
+        pix_tipo: formData.get('pix_tipo'),
+        pix_chave: formData.get('pix_chave'),
+      }),
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error?.message || 'Nao foi possivel salvar o perfil.');
+    }
+
+    localStorage.setItem('admin_user', JSON.stringify(payload.data));
+    renderAdminProfile();
+    fillProfileForm(payload.data);
+    showProfileFeedback('Dados do perfil salvos com sucesso.');
+  } catch (error) {
+    showProfileFeedback(error.message, 'error');
+  }
+}
+
 async function submitLogin(event) {
   event.preventDefault();
   loginError.classList.add('hidden');
@@ -516,6 +622,7 @@ async function submitLogin(event) {
     localStorage.setItem('admin_user', JSON.stringify(payload.data.admin));
     renderAdminProfile();
     hideLoginModal();
+    await fetchAdminProfile();
     await fetchDashboardStats();
     await fetchAdminCampanhas();
     await fetchAdminRifinhas();
@@ -538,6 +645,7 @@ async function bootstrapPanel() {
     return;
   }
 
+  await fetchAdminProfile();
   await fetchDashboardStats();
   await fetchAdminCampanhas();
 }
@@ -556,6 +664,8 @@ document.querySelector('#campaignModal').addEventListener('click', (event) => {
 campaignForm.addEventListener('submit', createCampaignFromForm);
 refreshOrdersButton.addEventListener('click', loadOrders);
 loginForm.addEventListener('submit', submitLogin);
+profileButton.addEventListener('click', () => setActiveTab('perfil'));
+profileForm.addEventListener('submit', submitProfileForm);
 logoutButton.addEventListener('click', clearSession);
 
 bootstrapPanel();

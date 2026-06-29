@@ -55,13 +55,16 @@ model UsuarioCliente {
 }
 
 model Administrador {
-  id        String   @id @default(uuid()) @db.Uuid
-  nome      String   @db.VarChar(160)
-  email     String   @unique @db.VarChar(180)
-  password  String   @db.VarChar(255)
-  whatsapp  String?  @db.VarChar(30)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                String   @id @default(uuid()) @db.Uuid
+  nome              String   @db.VarChar(160)
+  email             String   @unique @db.VarChar(180)
+  password          String   @db.VarChar(255)
+  whatsapp          String?  @db.VarChar(30)
+  pixChave          String?  @map("pix_chave") @db.VarChar(180)
+  pixTipo           String?  @map("pix_tipo") @db.VarChar(30)
+  telefoneMensagens String?  @map("telefone_mensagens") @db.VarChar(30)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   campanhas Campanha[]
 

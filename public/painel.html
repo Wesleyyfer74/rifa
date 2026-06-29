@@ -84,7 +84,7 @@
         <button class="grid h-11 w-11 place-items-center rounded-2xl border border-panel-line bg-panel-card text-panel-muted hover:text-gold-300" type="button" aria-label="Notificações">
           <i data-lucide="bell" class="h-5 w-5"></i>
         </button>
-        <button id="logoutButton" class="flex items-center gap-3 rounded-2xl border border-panel-line bg-panel-card px-3 py-2 text-left shadow-dark" type="button">
+        <button id="profileButton" class="flex items-center gap-3 rounded-2xl border border-panel-line bg-panel-card px-3 py-2 text-left shadow-dark transition hover:border-gold-500/50" type="button">
           <div id="adminInitials" class="grid h-9 w-9 place-items-center rounded-xl bg-gold-500 text-sm font-bold text-black">--</div>
           <div class="hidden leading-tight sm:block">
             <strong id="adminName" class="block text-sm font-bold text-gold-50">Administrador</strong>
@@ -207,6 +207,64 @@
         <h1 class="text-3xl font-extrabold text-gold-50">Customização</h1>
         <p class="mt-2 text-sm font-medium text-panel-muted">Área preparada para cores, domínio, pixel, scripts e aparência das páginas externas.</p>
       </div>
+    </section>
+    <section class="panel-screen hidden" data-screen="perfil">
+      <div class="mb-6 flex flex-col gap-3">
+        <p class="text-sm font-bold uppercase tracking-wide text-gold-300">Conta do dono</p>
+        <h1 class="text-3xl font-extrabold tracking-tight text-gold-50">Editar dados do perfil</h1>
+        <p class="max-w-3xl text-sm font-medium text-panel-muted">Esses dados ficam salvos no banco e serao usados pelo painel, cobrancas Pix e futuras mensagens de confirmacao aos compradores.</p>
+      </div>
+
+      <form id="profileForm" class="overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+        <div class="grid gap-5 border-b border-panel-line p-6 lg:grid-cols-2">
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Nome do dono</span>
+            <input name="nome" required maxlength="160" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Nome do administrador">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Email administrativo</span>
+            <input name="email" required type="email" maxlength="180" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="admin@email.com">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">WhatsApp principal</span>
+            <input name="whatsapp" inputmode="tel" maxlength="30" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="(65) 99999-9999">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Telefone para envio de mensagens</span>
+            <input name="telefone_mensagens" inputmode="tel" maxlength="30" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="(65) 99999-9999">
+          </label>
+        </div>
+
+        <div class="grid gap-5 border-b border-panel-line p-6 lg:grid-cols-[0.7fr_1.3fr]">
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Tipo da chave Pix</span>
+            <select name="pix_tipo" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+              <option value="">Selecionar</option>
+              <option value="cpf">CPF</option>
+              <option value="cnpj">CNPJ</option>
+              <option value="email">Email</option>
+              <option value="telefone">Telefone</option>
+              <option value="aleatoria">Chave aleatoria</option>
+            </select>
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Chave Pix</span>
+            <input name="pix_chave" maxlength="180" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Chave que recebera os pagamentos">
+          </label>
+        </div>
+
+        <div class="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <p id="profileFeedback" class="hidden rounded-2xl border px-4 py-3 text-sm font-bold"></p>
+          <div class="flex flex-col-reverse gap-3 sm:ml-auto sm:flex-row">
+            <button id="logoutButton" class="h-12 rounded-2xl border border-red-500/30 px-5 text-sm font-extrabold text-red-300 hover:bg-red-500/10" type="button">Sair da conta</button>
+            <button class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Salvar dados</button>
+          </div>
+        </div>
+      </form>
     </section>
   </main>
 
