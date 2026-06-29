@@ -1,7 +1,7 @@
 {
-  "name": "rifa-do-cipriano",
+  "name": "rifa-headless",
   "version": "1.0.0",
-  "description": "Landing page premium para a Rifa Do Cipriano.",
+  "description": "Sistema headless premium para rifas.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -15,7 +15,7 @@ function buildPayerEmail(pedido) {
     return pedido.compradorEmail;
   }
 
-  return `pedido-${pedido.id}@rifadocipriano.local`;
+  return `pedido-${pedido.id}@rifas.local`;
 }
 
 async function createPixPayment(pedido) {
@@ -24,7 +24,7 @@ async function createPixPayment(pedido) {
   const notificationUrl = `${env.publicAppUrl.replace(/\/$/, '')}/api/v1/webhooks/pagamento`;
   const body = {
     transaction_amount: Number(pedido.valorTotal),
-    description: `Pedido ${pedido.id} - Rifa Do Cipriano`,
+    description: `Pedido ${pedido.id} - Rifa Premium`,
     payment_method_id: 'pix',
     external_reference: pedido.id,
     notification_url: notificationUrl,

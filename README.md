@@ -1,4 +1,4 @@
-# Rifa Do Cipriano - Headless API + Painel
+# Rifa Headless - API + Painel
 
 Projeto Node.js API-first para gestao de rifas, campanhas, rifinhas, pedidos e painel administrativo.
 
@@ -209,13 +209,13 @@ DB_WAIT_INTERVAL_MS=2000
 Build local:
 
 ```bash
-docker build -t rifa-do-cipriano .
+docker build -t rifa-headless .
 ```
 
 Run local:
 
 ```bash
-docker run --rm -p 3000:3000 --env-file .env rifa-do-cipriano
+docker run --rm -p 3000:3000 --env-file .env rifa-headless
 ```
 
 ## Endpoints iniciais
