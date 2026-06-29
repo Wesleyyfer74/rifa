@@ -1,31 +1,10 @@
 let campaigns = [];
-
-const fallbackOrders = [
-  {
-    id: 'preview-001',
-    campanha: { titulo: 'Grande Rifa Do Cipriano', slug: 'grande-rifa-do-cipriano' },
-    nome_comprador: 'José Silva',
-    whatsapp_comprador: '65999999999',
-    cotas: [1, 5, 12],
-    status_pagamento: 'pago',
-    valor_total: 30,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'preview-002',
-    campanha: { titulo: 'Pix da Sorte - R$ 5.000', slug: 'pix-da-sorte-5000' },
-    nome_comprador: 'Maria Souza',
-    whatsapp_comprador: '65988888888',
-    cotas: [20, 21],
-    status_pagamento: 'pendente',
-    valor_total: 10,
-    created_at: new Date().toISOString(),
-  },
-];
+let rifinhas = [];
 
 const navItems = document.querySelectorAll('.nav-item, .mobile-nav-item');
 const screens = document.querySelectorAll('.panel-screen');
 const campaignGrid = document.querySelector('#campaignGrid');
+const rifinhasList = document.querySelector('#rifinhasList');
 const ordersCampaignList = document.querySelector('#ordersCampaignList');
 const ordersList = document.querySelector('#ordersList');
 const refreshOrdersButton = document.querySelector('#refreshOrders');
@@ -37,15 +16,73 @@ const statActiveCampaigns = document.querySelector('#statActiveCampaigns');
 const statOrdersToday = document.querySelector('#statOrdersToday');
 const statPendingRevenue = document.querySelector('#statPendingRevenue');
 const statSoldQuotas = document.querySelector('#statSoldQuotas');
+const adminInitials = document.querySelector('#adminInitials');
+const adminName = document.querySelector('#adminName');
+const logoutButton = document.querySelector('#logoutButton');
+const loginModal = document.querySelector('#loginModal');
+const loginForm = document.querySelector('#loginForm');
+const loginError = document.querySelector('#loginError');
 
 function getAdminToken() {
   return localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
+}
+
+function getStoredAdmin() {
+  try {
+    return JSON.parse(localStorage.getItem('admin_user') || 'null');
+  } catch (error) {
+    return null;
+  }
 }
 
 function authHeaders() {
   const token = getAdminToken();
 
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function showLoginModal() {
+  loginModal.classList.remove('hidden');
+  loginModal.classList.add('flex');
+  loginForm.elements.email.focus();
+}
+
+function hideLoginModal() {
+  loginModal.classList.add('hidden');
+  loginModal.classList.remove('flex');
+  loginError.classList.add('hidden');
+  loginError.textContent = '';
+  loginForm.reset();
+}
+
+function renderAdminProfile() {
+  const admin = getStoredAdmin();
+  const name = admin?.nome || 'Administrador';
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || '--';
+
+  adminName.textContent = name;
+  adminInitials.textContent = initials;
+}
+
+function clearSession() {
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('token');
+  localStorage.removeItem('admin_user');
+  campaigns = [];
+  rifinhas = [];
+  renderAdminProfile();
+  renderDashboardStats();
+  renderCampaigns([]);
+  renderRifinhas([]);
+  renderOrders([]);
+  ordersCampaignList.innerHTML = '';
+  showLoginModal();
 }
 
 function slugify(value) {
@@ -174,6 +211,15 @@ function renderCampaigns(items) {
 function renderOrderCampaigns() {
   ordersCampaignList.innerHTML = '';
 
+  if (!campaigns.filter((campaign) => campaign.status === 'Ativo').length) {
+    ordersCampaignList.innerHTML = `
+      <div class="rounded-3xl border border-dashed border-gold-500/30 bg-panel-card p-8 text-center lg:col-span-3">
+        <p class="text-sm font-extrabold text-panel-muted">Nenhuma campanha ativa para auditar pedidos.</p>
+      </div>
+    `;
+    return;
+  }
+
   campaigns.filter((campaign) => campaign.status === 'Ativo').forEach((campaign) => {
     const article = document.createElement('article');
     article.className = 'rounded-3xl border border-panel-line bg-panel-card p-5 shadow-dark transition hover:-translate-y-0.5 hover:shadow-gold';
@@ -203,6 +249,37 @@ function renderOrderCampaigns() {
   });
 
   lucide.createIcons();
+}
+
+function renderRifinhas(items) {
+  rifinhasList.innerHTML = '';
+
+  if (!items.length) {
+    rifinhasList.innerHTML = `
+      <div class="rounded-3xl border border-dashed border-gold-500/30 bg-panel-card p-8 text-center lg:col-span-3">
+        <p class="text-sm font-extrabold text-panel-muted">Nenhuma rifinha criada ainda.</p>
+      </div>
+    `;
+    return;
+  }
+
+  rifinhasList.innerHTML = items.map((rifinha) => `
+    <article class="rounded-3xl border border-panel-line bg-panel-card p-6 shadow-dark">
+      <span class="inline-flex rounded-full px-3 py-1 text-xs font-extrabold ${statusClasses(rifinha.status === 'ativo' ? 'Ativo' : 'Pausado')}">${rifinha.status === 'ativo' ? 'Ativa' : 'Pausada'}</span>
+      <h2 class="mt-4 text-xl font-extrabold text-gold-50">${escapeHtml(rifinha.titulo)}</h2>
+      <p class="mt-2 text-sm font-medium text-panel-muted">${escapeHtml(rifinha.campanha?.titulo || 'Campanha')}</p>
+      <div class="mt-5 grid grid-cols-2 gap-3">
+        <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
+          <span class="block text-xs font-bold text-panel-muted">Cotas</span>
+          <strong class="mt-1 block text-sm font-extrabold text-gold-100">${Number(rifinha.totalCotas || 0).toLocaleString('pt-BR')}</strong>
+        </div>
+        <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
+          <span class="block text-xs font-bold text-panel-muted">Valor</span>
+          <strong class="mt-1 block text-sm font-extrabold text-gold-100">${formatMoney(rifinha.valorCota)}</strong>
+        </div>
+      </div>
+    </article>
+  `).join('');
 }
 
 function renderOrders(orders) {
@@ -257,7 +334,7 @@ async function loadOrders() {
     const payload = await response.json();
     renderOrders(payload.data || []);
   } catch (error) {
-    renderOrders(fallbackOrders);
+    renderOrders([]);
   }
 
   lucide.createIcons();
@@ -306,6 +383,34 @@ async function fetchAdminCampanhas() {
   renderOrderCampaigns();
 }
 
+async function fetchAdminRifinhas() {
+  if (!getAdminToken()) {
+    rifinhas = [];
+    renderRifinhas(rifinhas);
+    return;
+  }
+
+  rifinhasList.innerHTML = `
+    <div class="rounded-3xl border border-panel-line bg-panel-card p-8 text-center lg:col-span-3">
+      <p class="text-sm font-extrabold text-panel-muted">Carregando rifinhas...</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('/api/v1/admin/rifinhas', {
+      headers: authHeaders(),
+    });
+
+    if (!response.ok) throw new Error('Falha ao buscar rifinhas');
+    const payload = await response.json();
+    rifinhas = payload.data || [];
+  } catch (error) {
+    rifinhas = [];
+  }
+
+  renderRifinhas(rifinhas);
+}
+
 function setActiveTab(tab) {
   navItems.forEach((item) => {
     const isActive = item.dataset.tab === tab;
@@ -318,6 +423,10 @@ function setActiveTab(tab) {
 
   if (tab === 'pedidos') {
     loadOrders();
+  }
+
+  if (tab === 'rifinhas') {
+    fetchAdminRifinhas();
   }
 }
 
@@ -378,6 +487,61 @@ async function createCampaignFromForm(event) {
   }
 }
 
+async function submitLogin(event) {
+  event.preventDefault();
+  loginError.classList.add('hidden');
+  loginError.textContent = '';
+
+  const formData = new FormData(loginForm);
+
+  try {
+    const response = await fetch('/api/v1/auth/login', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: formData.get('email'),
+        password: formData.get('password'),
+      }),
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error?.message || 'Nao foi possivel entrar.');
+    }
+
+    localStorage.setItem('admin_token', payload.data.token);
+    localStorage.setItem('admin_user', JSON.stringify(payload.data.admin));
+    renderAdminProfile();
+    hideLoginModal();
+    await fetchDashboardStats();
+    await fetchAdminCampanhas();
+    await fetchAdminRifinhas();
+  } catch (error) {
+    loginError.textContent = error.message;
+    loginError.classList.remove('hidden');
+  }
+}
+
+async function bootstrapPanel() {
+  renderAdminProfile();
+
+  if (!getAdminToken()) {
+    renderDashboardStats();
+    renderCampaigns([]);
+    renderRifinhas([]);
+    renderOrders([]);
+    ordersCampaignList.innerHTML = '';
+    showLoginModal();
+    return;
+  }
+
+  await fetchDashboardStats();
+  await fetchAdminCampanhas();
+}
+
 navItems.forEach((item) => {
   item.addEventListener('click', () => setActiveTab(item.dataset.tab));
 });
@@ -391,7 +555,8 @@ document.querySelector('#campaignModal').addEventListener('click', (event) => {
 });
 campaignForm.addEventListener('submit', createCampaignFromForm);
 refreshOrdersButton.addEventListener('click', loadOrders);
+loginForm.addEventListener('submit', submitLogin);
+logoutButton.addEventListener('click', clearSession);
 
-fetchAdminCampanhas();
-fetchDashboardStats();
+bootstrapPanel();
 lucide.createIcons();
