@@ -302,8 +302,8 @@
     </article>
   </template>
 
-  <div id="campaignModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-    <div class="w-full max-w-2xl overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+  <div id="campaignModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/75 px-4 py-8 backdrop-blur-sm">
+    <div class="w-full max-w-4xl overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
       <div class="flex items-center justify-between border-b border-panel-line p-6">
         <div>
           <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Nova campanha</p>
@@ -314,14 +314,26 @@
         </button>
       </div>
 
-      <form id="campaignForm" class="grid gap-5 p-6">
+      <form id="campaignForm" class="grid gap-6 p-6">
         <label class="grid gap-2">
           <span class="text-sm font-bold text-panel-muted">Título</span>
           <input name="titulo" required maxlength="180" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: R$50.000">
         </label>
 
+        <div class="grid gap-5 md:grid-cols-2">
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Premio principal</span>
+            <input name="premio_principal" required maxlength="180" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: iPhone 15 Pro + R$ 5.000">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Data do sorteio</span>
+            <input name="data_sorteio" type="datetime-local" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+          </label>
+        </div>
+
         <label class="grid gap-2">
-          <span class="text-sm font-bold text-panel-muted">Imagem</span>
+          <span class="text-sm font-bold text-panel-muted">Imagem de capa da rifa</span>
           <input name="imagem" required accept="image/png,image/jpeg,image/webp,image/gif" type="file" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 py-3 text-sm font-semibold text-gold-50 outline-none file:mr-4 file:rounded-xl file:border-0 file:bg-gold-500 file:px-3 file:py-1 file:text-xs file:font-extrabold file:text-black focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
         </label>
 
@@ -336,6 +348,53 @@
             <input name="total_cotas" required min="1" step="1" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10000">
           </label>
         </div>
+
+        <div class="grid gap-5 md:grid-cols-4">
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Reserva expira em</span>
+            <input name="reserva_expira_minutos" required min="5" max="1440" step="1" type="number" value="15" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="15">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Minimo por pedido</span>
+            <input name="min_cotas_por_pedido" required min="1" step="1" type="number" value="1" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="1">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Maximo por pedido</span>
+            <input name="max_cotas_por_pedido" required min="1" step="1" type="number" value="100" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="100">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">WhatsApp suporte</span>
+            <input name="whatsapp_suporte" inputmode="tel" maxlength="30" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="(65) 99999-9999">
+          </label>
+        </div>
+
+        <label class="grid gap-2">
+          <span class="text-sm font-bold text-panel-muted">Descricao para a pagina de venda</span>
+          <textarea name="descricao" required rows="3" maxlength="1200" class="resize-none rounded-2xl border border-panel-line bg-black/40 px-4 py-3 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Explique o premio, como participar e por que essa rifa e especial."></textarea>
+        </label>
+
+        <div class="grid gap-5 md:grid-cols-2">
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Regulamento resumido</span>
+            <textarea name="regulamento" required rows="4" maxlength="2500" class="resize-none rounded-2xl border border-panel-line bg-black/40 px-4 py-3 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Regras do sorteio, criterios, prazo de pagamento e validacao do ganhador."></textarea>
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Instrucoes de pagamento</span>
+            <textarea name="instrucoes_pagamento" rows="4" maxlength="1200" class="resize-none rounded-2xl border border-panel-line bg-black/40 px-4 py-3 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: Apos gerar o Pix, pague dentro do prazo para confirmar suas cotas."></textarea>
+          </label>
+        </div>
+
+        <label class="grid gap-2 md:max-w-xs">
+          <span class="text-sm font-bold text-panel-muted">Status inicial</span>
+          <select name="status" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+            <option value="ativo">Ativa</option>
+            <option value="pausado">Pausada</option>
+          </select>
+        </label>
 
         <div class="flex flex-col-reverse gap-3 border-t border-panel-line pt-5 sm:flex-row sm:justify-end">
           <button id="cancelCampaignModal" class="h-12 rounded-2xl border border-panel-line px-5 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button">Cancelar</button>

@@ -52,6 +52,7 @@ async function getPublicBySlug(req, res, next) {
         status: campanha.status,
         imagem_url: campanha.imagemUrl,
         data_sorteio: campanha.dataSorteio,
+        metadata: campanha.metadata,
         rifinhas: campanha.rifinhas.map((rifinha) => ({
           id: rifinha.id,
           titulo: rifinha.titulo,
@@ -161,6 +162,42 @@ async function buildUniqueSlug(title, requestedSlug) {
   return candidate;
 }
 
+function parseJsonField(value, fallback = {}) {
+  if (!value) return fallback;
+  if (typeof value === 'object') return value;
+
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    throw new HttpError(422, 'metadata precisa ser um JSON valido.');
+  }
+}
+
+function parsePositiveNumber(value, fieldName) {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new HttpError(422, `${fieldName} precisa ser maior que zero.`);
+  }
+
+  return parsed;
+}
+
+function parsePositiveInteger(value, fieldName) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new HttpError(422, `${fieldName} precisa ser um numero inteiro maior que zero.`);
+  }
+
+  return parsed;
+}
+
+function cleanString(value) {
+  const cleaned = String(value || '').trim();
+  return cleaned === '' ? null : cleaned;
+}
+
 async function create(req, res, next) {
   try {
     const {
@@ -189,6 +226,52 @@ async function create(req, res, next) {
     const uploadedImageUrl = req.file ? `/uploads/campanhas/${req.file.filename}` : null;
     const imageUrl = uploadedImageUrl || imagemUrl || imagem_url;
     const drawDate = dataSorteio ?? data_sorteio;
+    const parsedMetadata = parseJsonField(metadata, {});
+    const normalizedQuotaValue = parsePositiveNumber(quotaValue, 'valor_cota');
+    const normalizedQuotaTotal = parsePositiveInteger(quotaTotal, 'total_cotas');
+    const minCotasPorPedido = parsePositiveInteger(parsedMetadata.min_cotas_por_pedido || 1, 'min_cotas_por_pedido');
+    const maxCotasPorPedido = parsePositiveInteger(parsedMetadata.max_cotas_por_pedido || normalizedQuotaTotal, 'max_cotas_por_pedido');
+    const reservaExpiraMinutos = parsePositiveInteger(parsedMetadata.reserva_expira_minutos || 15, 'reserva_expira_minutos');
+    const premioPrincipal = cleanString(parsedMetadata.premio_principal);
+    const campaignDescription = cleanString(descricao);
+    const campaignRules = cleanString(regulamento);
+
+    if (!titulo || String(titulo).trim().length < 3) {
+      throw new HttpError(422, 'titulo precisa ter pelo menos 3 caracteres.');
+    }
+
+    if (!premioPrincipal) {
+      throw new HttpError(422, 'premio_principal e obrigatorio.');
+    }
+
+    if (!campaignDescription) {
+      throw new HttpError(422, 'descricao e obrigatoria.');
+    }
+
+    if (!campaignRules) {
+      throw new HttpError(422, 'regulamento e obrigatorio.');
+    }
+
+    if (!['ativo', 'pausado', 'finalizado'].includes(status || 'ativo')) {
+      throw new HttpError(422, 'status invalido.');
+    }
+
+    if (minCotasPorPedido > maxCotasPorPedido) {
+      throw new HttpError(422, 'min_cotas_por_pedido nao pode ser maior que max_cotas_por_pedido.');
+    }
+
+    if (maxCotasPorPedido > normalizedQuotaTotal) {
+      throw new HttpError(422, 'max_cotas_por_pedido nao pode ser maior que total_cotas.');
+    }
+
+    if (reservaExpiraMinutos < 5 || reservaExpiraMinutos > 1440) {
+      throw new HttpError(422, 'reserva_expira_minutos precisa estar entre 5 e 1440.');
+    }
+
+    const normalizedDrawDate = drawDate ? new Date(drawDate) : null;
+    if (normalizedDrawDate && Number.isNaN(normalizedDrawDate.getTime())) {
+      throw new HttpError(422, 'data_sorteio invalida.');
+    }
 
     if (!uploadedImageUrl && req.admin_id) {
       throw new HttpError(422, 'O arquivo de imagem e obrigatorio.');
@@ -209,19 +292,29 @@ async function create(req, res, next) {
       throw new HttpError(422, 'usuarioClienteId, titulo, valorCota e totalCotas sao obrigatorios.');
     }
 
+    const campaignMetadata = {
+      ...parsedMetadata,
+      premio_principal: premioPrincipal,
+      reserva_expira_minutos: reservaExpiraMinutos,
+      min_cotas_por_pedido: minCotasPorPedido,
+      max_cotas_por_pedido: maxCotasPorPedido,
+      whatsapp_suporte: cleanString(parsedMetadata.whatsapp_suporte),
+      instrucoes_pagamento: cleanString(parsedMetadata.instrucoes_pagamento),
+    };
+
     const campanha = await campanhasRepository.create({
       usuarioClienteId: ownerId,
       administradorId: req.admin_id,
       titulo,
       slug: await buildUniqueSlug(titulo, slug),
-      descricao,
-      regulamento,
-      valorCota: quotaValue,
-      totalCotas: quotaTotal,
+      descricao: campaignDescription,
+      regulamento: campaignRules,
+      valorCota: normalizedQuotaValue,
+      totalCotas: normalizedQuotaTotal,
       status: status || 'ativo',
       imagemUrl: imageUrl,
-      dataSorteio: drawDate ? new Date(drawDate) : null,
-      metadata,
+      dataSorteio: normalizedDrawDate,
+      metadata: campaignMetadata,
       rifinhas: {
         create: rifinhas.map((rifinha, index) => ({
           titulo: rifinha.titulo,

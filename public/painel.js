@@ -529,6 +529,29 @@ async function createCampaignFromForm(event) {
     return;
   }
 
+  const totalCotas = Number(formData.get('total_cotas') || 0);
+  const minCotas = Number(formData.get('min_cotas_por_pedido') || 0);
+  const maxCotas = Number(formData.get('max_cotas_por_pedido') || 0);
+
+  if (minCotas > maxCotas) {
+    alert('O minimo de cotas por pedido nao pode ser maior que o maximo.');
+    return;
+  }
+
+  if (maxCotas > totalCotas) {
+    alert('O maximo de cotas por pedido nao pode ser maior que o total de cotas da campanha.');
+    return;
+  }
+
+  formData.set('metadata', JSON.stringify({
+    premio_principal: formData.get('premio_principal'),
+    reserva_expira_minutos: Number(formData.get('reserva_expira_minutos') || 15),
+    min_cotas_por_pedido: minCotas,
+    max_cotas_por_pedido: maxCotas,
+    whatsapp_suporte: formData.get('whatsapp_suporte'),
+    instrucoes_pagamento: formData.get('instrucoes_pagamento'),
+  }));
+
   try {
     const response = await fetch('/api/v1/admin/campanhas', {
       method: 'POST',
