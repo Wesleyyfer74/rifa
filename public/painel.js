@@ -23,9 +23,6 @@ const headerLogoutButton = document.querySelector('#headerLogoutButton');
 const profileForm = document.querySelector('#profileForm');
 const profileFeedback = document.querySelector('#profileFeedback');
 const logoutButton = document.querySelector('#logoutButton');
-const loginModal = document.querySelector('#loginModal');
-const loginForm = document.querySelector('#loginForm');
-const loginError = document.querySelector('#loginError');
 
 function getAdminToken() {
   return localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
@@ -43,20 +40,6 @@ function authHeaders() {
   const token = getAdminToken();
 
   return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-function showLoginModal() {
-  loginModal.classList.remove('hidden');
-  loginModal.classList.add('flex');
-  loginForm.elements.login.focus();
-}
-
-function hideLoginModal() {
-  loginModal.classList.add('hidden');
-  loginModal.classList.remove('flex');
-  loginError.classList.add('hidden');
-  loginError.textContent = '';
-  loginForm.reset();
 }
 
 function renderAdminProfile() {
@@ -132,17 +115,7 @@ function clearSession() {
   localStorage.removeItem('admin_token');
   localStorage.removeItem('token');
   localStorage.removeItem('admin_user');
-  campaigns = [];
-  rifinhas = [];
-  renderAdminProfile();
-  renderDashboardStats();
-  renderCampaigns([]);
-  renderRifinhas([]);
-  renderOrders([]);
-  fillProfileForm({});
-  hideProfileFeedback();
-  ordersCampaignList.innerHTML = '';
-  showLoginModal();
+  window.location.href = '/login';
 }
 
 function slugify(value) {
@@ -601,7 +574,7 @@ async function submitProfileForm(event) {
   hideProfileFeedback();
 
   if (!getAdminToken()) {
-    showLoginModal();
+    window.location.href = '/login';
     return;
   }
 
@@ -639,55 +612,11 @@ async function submitProfileForm(event) {
   }
 }
 
-async function submitLogin(event) {
-  event.preventDefault();
-  loginError.classList.add('hidden');
-  loginError.textContent = '';
-
-  const formData = new FormData(loginForm);
-
-  try {
-    const response = await fetch('/api/v1/auth/login', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        login: formData.get('login'),
-        password: formData.get('password'),
-      }),
-    });
-    const payload = await response.json();
-
-    if (!response.ok) {
-      throw new Error(payload.error?.message || 'Nao foi possivel entrar.');
-    }
-
-    localStorage.setItem('admin_token', payload.data.token);
-    localStorage.setItem('admin_user', JSON.stringify(payload.data.admin));
-    renderAdminProfile();
-    hideLoginModal();
-    await fetchAdminProfile();
-    await fetchDashboardStats();
-    await fetchAdminCampanhas();
-    await fetchAdminRifinhas();
-  } catch (error) {
-    loginError.textContent = error.message;
-    loginError.classList.remove('hidden');
-  }
-}
-
 async function bootstrapPanel() {
   renderAdminProfile();
 
   if (!getAdminToken()) {
-    renderDashboardStats();
-    renderCampaigns([]);
-    renderRifinhas([]);
-    renderOrders([]);
-    ordersCampaignList.innerHTML = '';
-    showLoginModal();
+    window.location.href = '/login';
     return;
   }
 
@@ -709,7 +638,6 @@ document.querySelector('#campaignModal').addEventListener('click', (event) => {
 });
 campaignForm.addEventListener('submit', createCampaignFromForm);
 refreshOrdersButton.addEventListener('click', loadOrders);
-loginForm.addEventListener('submit', submitLogin);
 profileButton.addEventListener('click', () => setActiveTab('perfil'));
 headerLogoutButton.addEventListener('click', clearSession);
 profileForm.addEventListener('submit', submitProfileForm);

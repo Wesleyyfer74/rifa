@@ -40,10 +40,14 @@ app.use(express.static(path.join(__dirname, '..', 'public'), {
 app.get('/', (req, res) => {
   res.status(404).json({
     error: {
-      message: 'Pagina inicial nao existe. Use /painel ou /rifa/:slug.',
+      message: 'Pagina inicial nao existe. Use /login, /painel ou /rifa/:slug.',
       status: 404,
     },
   });
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
 app.get('/painel', (req, res) => {

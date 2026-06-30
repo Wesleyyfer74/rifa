@@ -407,32 +407,6 @@
     </div>
   </div>
 
-  <div id="loginModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
-    <div class="w-full max-w-md overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
-      <div class="border-b border-panel-line p-6">
-        <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Acesso administrativo</p>
-        <h2 class="mt-1 text-2xl font-extrabold text-gold-50">Entrar no painel</h2>
-        <p class="mt-2 text-sm font-medium text-panel-muted">Use o login ou email cadastrado para carregar seus dados reais.</p>
-      </div>
-
-      <form id="loginForm" class="grid gap-5 p-6">
-        <label class="grid gap-2">
-          <span class="text-sm font-bold text-panel-muted">Login ou email</span>
-          <input name="login" required type="text" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="seu-login">
-        </label>
-
-        <label class="grid gap-2">
-          <span class="text-sm font-bold text-panel-muted">Senha</span>
-          <input name="password" required minlength="8" type="password" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Sua senha">
-        </label>
-
-        <p id="loginError" class="hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-bold text-red-300"></p>
-
-        <button class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Entrar</button>
-      </form>
-    </div>
-  </div>
-
   <script src="/painel.js"></script>
 </body>
 </html>
