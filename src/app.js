@@ -33,7 +33,18 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api', apiRoutes);
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  index: false,
+}));
+
+app.get('/', (req, res) => {
+  res.status(404).json({
+    error: {
+      message: 'Pagina inicial nao existe. Use /painel ou /rifa/:slug.',
+      status: 404,
+    },
+  });
+});
 
 app.get('/painel', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'painel.html'));
@@ -44,7 +55,12 @@ app.get('/rifa/:slug', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  res.status(404).json({
+    error: {
+      message: 'Rota nao encontrada.',
+      status: 404,
+    },
+  });
 });
 
 app.use(errorHandler);
