@@ -18,6 +18,7 @@ const statPendingRevenue = document.querySelector('#statPendingRevenue');
 const statSoldQuotas = document.querySelector('#statSoldQuotas');
 const adminInitials = document.querySelector('#adminInitials');
 const adminName = document.querySelector('#adminName');
+const campaignsHomeButton = document.querySelector('#campaignsHomeButton');
 const profileButton = document.querySelector('#profileButton');
 const headerLogoutButton = document.querySelector('#headerLogoutButton');
 const profileForm = document.querySelector('#profileForm');
@@ -156,6 +157,8 @@ function formatCompactNumber(value) {
 }
 
 function renderDashboardStats(stats = {}) {
+  if (!statActiveCampaigns) return;
+
   statActiveCampaigns.textContent = Number(stats.campanhas_ativas || 0).toLocaleString('pt-BR');
   statOrdersToday.textContent = Number(stats.pedidos_hoje || 0).toLocaleString('pt-BR');
   statPendingRevenue.textContent = stats.receita_pendente_formatada || formatMoney(stats.receita_pendente || 0);
@@ -264,6 +267,8 @@ function renderCampaigns(items) {
 }
 
 function renderOrderCampaigns() {
+  if (!ordersCampaignList) return;
+
   ordersCampaignList.innerHTML = '';
 
   if (!campaigns.filter((campaign) => campaign.status === 'Ativo').length) {
@@ -307,6 +312,8 @@ function renderOrderCampaigns() {
 }
 
 function renderRifinhas(items) {
+  if (!rifinhasList) return;
+
   rifinhasList.innerHTML = '';
 
   if (!items.length) {
@@ -338,6 +345,8 @@ function renderRifinhas(items) {
 }
 
 function renderOrders(orders) {
+  if (!ordersList) return;
+
   if (!orders.length) {
     ordersList.innerHTML = `
       <div class="p-8 text-center">
@@ -375,6 +384,8 @@ function renderOrders(orders) {
 }
 
 async function loadOrders() {
+  if (!ordersList) return;
+
   ordersList.innerHTML = `
     <div class="p-8 text-center">
       <p class="text-sm font-bold text-panel-muted">Carregando pedidos...</p>
@@ -400,7 +411,6 @@ async function fetchAdminCampanhas() {
 
   if (!token) {
     campaigns = [];
-    renderOrderCampaigns();
     campaignGrid.innerHTML = `
       <div class="rounded-3xl border border-dashed border-gold-500/30 bg-panel-card p-8 text-center lg:col-span-3">
         <p class="text-sm font-extrabold text-panel-muted">Faça login no painel para carregar suas campanhas.</p>
@@ -430,12 +440,10 @@ async function fetchAdminCampanhas() {
         <p class="text-sm font-extrabold text-red-300">${escapeHtml(error.message)}</p>
       </div>
     `;
-    renderOrderCampaigns();
     return;
   }
 
   renderCampaigns(campaigns);
-  renderOrderCampaigns();
 }
 
 async function fetchAdminRifinhas() {
@@ -562,7 +570,6 @@ async function createCampaignFromForm(event) {
     }
 
     closeCampaignModal();
-    await fetchDashboardStats();
     await fetchAdminCampanhas();
   } catch (error) {
     alert(error.message);
@@ -621,7 +628,6 @@ async function bootstrapPanel() {
   }
 
   await fetchAdminProfile();
-  await fetchDashboardStats();
   await fetchAdminCampanhas();
 }
 
@@ -637,7 +643,8 @@ document.querySelector('#campaignModal').addEventListener('click', (event) => {
   if (event.target.id === 'campaignModal') closeCampaignModal();
 });
 campaignForm.addEventListener('submit', createCampaignFromForm);
-refreshOrdersButton.addEventListener('click', loadOrders);
+if (refreshOrdersButton) refreshOrdersButton.addEventListener('click', loadOrders);
+campaignsHomeButton.addEventListener('click', () => setActiveTab('campanhas'));
 profileButton.addEventListener('click', () => setActiveTab('perfil'));
 headerLogoutButton.addEventListener('click', clearSession);
 profileForm.addEventListener('submit', submitProfileForm);
