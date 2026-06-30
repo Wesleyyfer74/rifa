@@ -19,6 +19,7 @@ const statSoldQuotas = document.querySelector('#statSoldQuotas');
 const adminInitials = document.querySelector('#adminInitials');
 const adminName = document.querySelector('#adminName');
 const profileButton = document.querySelector('#profileButton');
+const headerLogoutButton = document.querySelector('#headerLogoutButton');
 const profileForm = document.querySelector('#profileForm');
 const profileFeedback = document.querySelector('#profileFeedback');
 const logoutButton = document.querySelector('#logoutButton');
@@ -710,6 +711,7 @@ campaignForm.addEventListener('submit', createCampaignFromForm);
 refreshOrdersButton.addEventListener('click', loadOrders);
 loginForm.addEventListener('submit', submitLogin);
 profileButton.addEventListener('click', () => setActiveTab('perfil'));
+headerLogoutButton.addEventListener('click', clearSession);
 profileForm.addEventListener('submit', submitProfileForm);
 logoutButton.addEventListener('click', clearSession);
 
