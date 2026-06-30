@@ -21,6 +21,16 @@ function requireEnv(name) {
   return value;
 }
 
+function requireAnyEnv(names) {
+  const found = names.find((name) => process.env[name] && process.env[name].trim() !== '');
+
+  if (!found) {
+    throw new Error(`Variavel de ambiente obrigatoria ausente: ${names.join(' ou ')}`);
+  }
+
+  return process.env[found];
+}
+
 function validateDatabaseUrl() {
   const databaseUrl = resolveDatabaseUrl(process.env);
 
@@ -34,9 +44,7 @@ function validateDatabaseUrl() {
 function validateRuntimeEnv() {
   if (process.env.NODE_ENV === 'production') {
     validateDatabaseUrl();
-    requireEnv('JWT_SECRET');
-    requireEnv('APP_KEY');
-    requireEnv('CORS_ALLOWED_ORIGINS');
+    requireAnyEnv(['JWT_SECRET', 'APP_KEY']);
 
     if ((process.env.PAYMENT_PROVIDER || 'manual') === 'mercado_pago') {
       requireEnv('MERCADO_PAGO_ACCESS_TOKEN');
@@ -49,7 +57,7 @@ const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 3000,
   databaseUrl: cleanUrlValue(process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL),
-  jwtSecret: process.env.JWT_SECRET,
+  jwtSecret: process.env.JWT_SECRET || process.env.APP_KEY,
   appKey: process.env.APP_KEY,
   publicAppUrl: process.env.PUBLIC_APP_URL || 'http://localhost:3000',
   corsAllowedOrigins: parseAllowedOrigins(process.env.CORS_ALLOWED_ORIGINS),
