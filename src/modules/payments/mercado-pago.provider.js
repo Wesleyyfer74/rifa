@@ -4,9 +4,9 @@ const { HttpError } = require('../../utils/http-error');
 
 const BASE_URL = 'https://api.mercadopago.com';
 
-function assertConfigured() {
-  if (!env.mercadoPagoAccessToken) {
-    throw new HttpError(500, 'MERCADO_PAGO_ACCESS_TOKEN nao configurado.');
+function assertConfigured(accessToken = env.mercadoPagoAccessToken) {
+  if (!accessToken) {
+    throw new HttpError(500, 'Token Mercado Pago nao configurado para este recebimento.');
   }
 }
 
@@ -18,8 +18,8 @@ function buildPayerEmail(pedido) {
   return `pedido-${pedido.id}@rifas.local`;
 }
 
-async function createPixPayment(pedido) {
-  assertConfigured();
+async function createPixPayment(pedido, accessToken = env.mercadoPagoAccessToken) {
+  assertConfigured(accessToken);
 
   const notificationUrl = `${env.publicAppUrl.replace(/\/$/, '')}/api/v1/webhooks/pagamento`;
   const body = {
@@ -37,7 +37,7 @@ async function createPixPayment(pedido) {
   const response = await fetch(`${BASE_URL}/v1/payments`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.mercadoPagoAccessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       'X-Idempotency-Key': pedido.id,
     },
@@ -66,12 +66,12 @@ async function createPixPayment(pedido) {
   };
 }
 
-async function getPayment(paymentId) {
-  assertConfigured();
+async function getPayment(paymentId, accessToken = env.mercadoPagoAccessToken) {
+  assertConfigured(accessToken);
 
   const response = await fetch(`${BASE_URL}/v1/payments/${paymentId}`, {
     headers: {
-      Authorization: `Bearer ${env.mercadoPagoAccessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 

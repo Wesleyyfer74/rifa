@@ -1,8 +1,9 @@
 const state = {
   campaign: null,
-  selectedNumbers: new Set(),
-  mode: 'random',
 };
+
+const MIN_ORDER_VALUE = 5;
+const QUOTA_PACKS = [5, 10, 20, 50, 100];
 
 const els = {
   loading: document.querySelector('#campaignLoading'),
@@ -20,21 +21,17 @@ const els = {
   rules: document.querySelector('#quotaRules'),
   tickerText: document.querySelector('#salesTickerText'),
   copyShareLink: document.querySelector('#copyShareLink'),
-  randomModeButton: document.querySelector('#randomModeButton'),
-  manualModeButton: document.querySelector('#manualModeButton'),
-  randomMode: document.querySelector('#randomMode'),
-  manualMode: document.querySelector('#manualMode'),
   randomQuantity: document.querySelector('#randomQuantity'),
+  quotaDisplay: document.querySelector('#quotaDisplay'),
+  decreaseQuota: document.querySelector('#decreaseQuota'),
+  increaseQuota: document.querySelector('#increaseQuota'),
   quickAmounts: document.querySelector('#quickAmounts'),
-  manualNumbers: document.querySelector('#manualNumbers'),
-  numbersGrid: document.querySelector('#numbersGrid'),
   summaryCount: document.querySelector('#summaryCount'),
   summaryTotal: document.querySelector('#summaryTotal'),
   form: document.querySelector('#orderForm'),
   result: document.querySelector('#orderResult'),
   campaignRules: document.querySelector('#campaignRules'),
   paymentInstructions: document.querySelector('#paymentInstructions'),
-  supportContact: document.querySelector('#supportContact'),
 };
 
 function getSlugFromPath() {
@@ -67,46 +64,49 @@ function getMetadata() {
 function getRules() {
   const metadata = getMetadata();
   const total = Number(state.campaign?.total_cotas || 1);
+  const quotaValue = Number(state.campaign?.valor_cota || 0);
+  const minByAmount = quotaValue > 0 ? Math.ceil(MIN_ORDER_VALUE / quotaValue) : 1;
 
   return {
-    min: Number(metadata.min_cotas_por_pedido || 1),
+    min: Math.max(Number(metadata.min_cotas_por_pedido || 1), minByAmount),
     max: Math.min(Number(metadata.max_cotas_por_pedido || 100), total),
     expires: Number(metadata.reserva_expira_minutos || 15),
+    minValue: MIN_ORDER_VALUE,
   };
 }
 
-function getSelectedManualNumbers() {
-  const typed = els.manualNumbers.value
-    .split(/[,\s]+/)
-    .map((item) => Number(item.trim()))
-    .filter((item) => Number.isInteger(item) && item > 0);
-
-  return [...new Set([...state.selectedNumbers, ...typed])].sort((a, b) => a - b);
-}
-
 function getCurrentQuantity() {
-  if (state.mode === 'manual') {
-    return getSelectedManualNumbers().length;
-  }
-
   return Number(els.randomQuantity.value || 0);
 }
 
-function updateSummary() {
-  const count = getCurrentQuantity();
-  const value = Number(state.campaign?.valor_cota || 0) * count;
+function clampQuantity(value) {
+  const rules = getRules();
+  const parsed = Number(value);
 
-  els.summaryCount.textContent = String(count);
-  els.summaryTotal.textContent = formatMoney(value);
+  if (!Number.isFinite(parsed)) {
+    return rules.min;
+  }
+
+  return Math.min(Math.max(Math.trunc(parsed), rules.min), rules.max);
 }
 
-function setMode(mode) {
-  state.mode = mode;
-  els.randomMode.classList.toggle('hidden', mode !== 'random');
-  els.manualMode.classList.toggle('hidden', mode !== 'manual');
-  els.randomModeButton.classList.toggle('active', mode === 'random');
-  els.manualModeButton.classList.toggle('active', mode === 'manual');
+function setQuantity(value) {
+  const quantity = clampQuantity(value);
+  els.randomQuantity.value = String(quantity);
   updateSummary();
+}
+
+function updateSummary() {
+  const count = clampQuantity(getCurrentQuantity());
+  const value = Number(state.campaign?.valor_cota || 0) * count;
+
+  if (els.randomQuantity.value !== String(count)) {
+    els.randomQuantity.value = String(count);
+  }
+
+  els.quotaDisplay.textContent = count.toLocaleString('pt-BR');
+  els.summaryCount.textContent = String(count);
+  els.summaryTotal.textContent = formatMoney(value);
 }
 
 function showError(message) {
@@ -124,7 +124,7 @@ function showPage() {
 
 function buildQuickAmounts() {
   const rules = getRules();
-  const values = [rules.min, 5, 10, 25, 50, 100, rules.max]
+  const values = [rules.min, ...QUOTA_PACKS, rules.max]
     .filter((value) => value >= rules.min && value <= rules.max);
   const uniqueValues = [...new Set(values)];
 
@@ -134,51 +134,7 @@ function buildQuickAmounts() {
 
   els.quickAmounts.querySelectorAll('button').forEach((button) => {
     button.addEventListener('click', () => {
-      els.randomQuantity.value = button.dataset.amount;
-      updateSummary();
-    });
-  });
-}
-
-function renderNumbersGrid() {
-  const campaign = state.campaign;
-  const total = Number(campaign.total_cotas || 0);
-  const occupied = new Set(campaign.numeros_ocupados || []);
-
-  if (total > 1000) {
-    els.numbersGrid.innerHTML = `
-      <div class="state-card">
-        <strong>Rifa com muitas cotas</strong>
-        <span>Digite os numeros desejados no campo acima ou use cotas aleatorias.</span>
-      </div>
-    `;
-    return;
-  }
-
-  const buttons = [];
-  for (let numero = 1; numero <= total; numero += 1) {
-    const unavailable = occupied.has(numero);
-    buttons.push(`
-      <button class="number-button${unavailable ? ' unavailable' : ''}" type="button" data-number="${numero}" ${unavailable ? 'disabled' : ''}>
-        ${String(numero).padStart(3, '0')}
-      </button>
-    `);
-  }
-
-  els.numbersGrid.innerHTML = buttons.join('');
-  els.numbersGrid.querySelectorAll('.number-button:not(.unavailable)').forEach((button) => {
-    button.addEventListener('click', () => {
-      const numero = Number(button.dataset.number);
-
-      if (state.selectedNumbers.has(numero)) {
-        state.selectedNumbers.delete(numero);
-        button.classList.remove('selected');
-      } else {
-        state.selectedNumbers.add(numero);
-        button.classList.add('selected');
-      }
-
-      updateSummary();
+      setQuantity(button.dataset.amount);
     });
   });
 }
@@ -198,19 +154,14 @@ function renderCampaign(campaign) {
   els.price.textContent = formatMoney(campaign.valor_cota);
   els.total.textContent = Number(campaign.total_cotas || 0).toLocaleString('pt-BR');
   els.available.textContent = Number(resumo.disponiveis || 0).toLocaleString('pt-BR');
-  els.rules.textContent = `${rules.min} a ${rules.max} cotas por pedido | reserva ${rules.expires} min`;
+  els.rules.textContent = `${rules.min} a ${rules.max} cotas por pedido | minimo ${formatMoney(rules.minValue)} | reserva ${rules.expires} min`;
   els.randomQuantity.min = String(rules.min);
   els.randomQuantity.max = String(rules.max);
-  els.randomQuantity.value = String(rules.min);
+  setQuantity(rules.min);
   els.campaignRules.textContent = campaign.regulamento || 'Regulamento nao informado.';
   els.paymentInstructions.textContent = metadata.instrucoes_pagamento || `Reserve suas cotas e pague dentro de ${rules.expires} minutos para confirmar.`;
-  els.supportContact.textContent = metadata.whatsapp_suporte
-    ? `WhatsApp de suporte: ${metadata.whatsapp_suporte}`
-    : 'Use o contato oficial divulgado pelo organizador da campanha.';
 
   buildQuickAmounts();
-  renderNumbersGrid();
-  updateSummary();
   showPage();
 }
 
@@ -240,10 +191,15 @@ async function loadSalesTicker(slug) {
 
 function validateOrderPayload(payload) {
   const rules = getRules();
-  const quantity = payload.quantidade_cotas || payload.cotas?.length || 0;
+  const quantity = payload.quantidade_cotas || 0;
 
   if (quantity < rules.min || quantity > rules.max) {
-    throw new Error(`Escolha entre ${rules.min} e ${rules.max} cota(s).`);
+    throw new Error(`Escolha entre ${rules.min} e ${rules.max} cota(s). Compra minima de ${formatMoney(rules.minValue)}.`);
+  }
+
+  const total = Number(state.campaign?.valor_cota || 0) * quantity;
+  if (total < rules.minValue) {
+    throw new Error(`A compra minima e de ${formatMoney(rules.minValue)}.`);
   }
 }
 
@@ -251,6 +207,53 @@ function renderOrderResult(html, type = 'success') {
   els.result.classList.remove('hidden', 'error');
   if (type === 'error') els.result.classList.add('error');
   els.result.innerHTML = html;
+}
+
+async function copyPixPayload(payload, button) {
+  try {
+    await navigator.clipboard.writeText(payload);
+    button.textContent = 'PIX copiado';
+    setTimeout(() => {
+      button.textContent = 'Copiar PIX copia e cola';
+    }, 1800);
+  } catch (error) {
+    window.prompt('Copie o PIX:', payload);
+  }
+}
+
+function buildPaymentResult(data) {
+  const pixPayload = data.pix_copia_cola || '';
+  const qrCode = data.pix_qr_code || '';
+  const qrCodeSrc = qrCode.startsWith('data:')
+    ? qrCode
+    : `data:image/png;base64,${qrCode}`;
+
+  if (!pixPayload || !qrCode) {
+    return `
+      <strong>Reserva criada com sucesso.</strong><br>
+      Pedido: ${escapeHtml(data.id)}<br>
+      Quantidade de cotas: ${Number(data.quantidade_cotas || 0).toLocaleString('pt-BR')}<br>
+      Total: ${formatMoney(data.valor_total)}<br>
+      Chance: ${escapeHtml(data.chance_percentual_label)}<br>
+      <span class="payment-warning">Gateway PIX ainda nao configurado. Ative o Mercado Pago para gerar QR Code automaticamente.</span>
+    `;
+  }
+
+  return `
+    <strong>PIX gerado com sucesso.</strong><br>
+    Pedido: ${escapeHtml(data.id)}<br>
+    Quantidade de cotas: ${Number(data.quantidade_cotas || 0).toLocaleString('pt-BR')}<br>
+    Total: ${formatMoney(data.valor_total)}<br>
+    Chance: ${escapeHtml(data.chance_percentual_label)}
+    <div class="pix-box">
+      <img src="${escapeHtml(qrCodeSrc)}" alt="QR Code PIX">
+      <label>
+        <span>PIX copia e cola</span>
+        <textarea readonly>${escapeHtml(pixPayload)}</textarea>
+      </label>
+      <button id="copyPixPayload" class="btn btn-gold btn-full" type="button">Copiar PIX copia e cola</button>
+    </div>
+  `;
 }
 
 async function submitOrder(event) {
@@ -263,13 +266,8 @@ async function submitOrder(event) {
     nome_comprador: formData.get('nome'),
     whatsapp_comprador: formData.get('whatsapp'),
     compradorEmail: formData.get('email') || undefined,
+    quantidade_cotas: clampQuantity(els.randomQuantity.value),
   };
-
-  if (state.mode === 'manual') {
-    payload.cotas = getSelectedManualNumbers();
-  } else {
-    payload.quantidade_cotas = Number(els.randomQuantity.value || 0);
-  }
 
   try {
     validateOrderPayload(payload);
@@ -288,15 +286,12 @@ async function submitOrder(event) {
       throw new Error(result.error?.message || 'Nao foi possivel reservar suas cotas.');
     }
 
-    const cotas = result.data.cotas.map((numero) => String(numero).padStart(3, '0')).join(', ');
-    renderOrderResult(`
-      <strong>Reserva criada com sucesso.</strong><br>
-      Pedido: ${escapeHtml(result.data.id)}<br>
-      Cotas: ${escapeHtml(cotas)}<br>
-      Total: ${formatMoney(result.data.valor_total)}<br>
-      Chance: ${escapeHtml(result.data.chance_percentual_label)}<br>
-      Status: aguardando pagamento Pix.
-    `);
+    renderOrderResult(buildPaymentResult(result.data));
+
+    const copyPixButton = document.querySelector('#copyPixPayload');
+    if (copyPixButton && result.data.pix_copia_cola) {
+      copyPixButton.addEventListener('click', () => copyPixPayload(result.data.pix_copia_cola, copyPixButton));
+    }
 
     await loadCampaign();
   } catch (error) {
@@ -330,7 +325,6 @@ async function loadCampaign() {
     }
 
     state.campaign = payload.data;
-    state.selectedNumbers.clear();
     renderCampaign(payload.data);
     loadSalesTicker(slug);
   } catch (error) {
@@ -338,10 +332,10 @@ async function loadCampaign() {
   }
 }
 
-els.randomModeButton.addEventListener('click', () => setMode('random'));
-els.manualModeButton.addEventListener('click', () => setMode('manual'));
+els.decreaseQuota.addEventListener('click', () => setQuantity(getCurrentQuantity() - 1));
+els.increaseQuota.addEventListener('click', () => setQuantity(getCurrentQuantity() + 1));
 els.randomQuantity.addEventListener('input', updateSummary);
-els.manualNumbers.addEventListener('input', updateSummary);
+els.randomQuantity.addEventListener('blur', () => setQuantity(els.randomQuantity.value));
 els.form.addEventListener('submit', submitOrder);
 els.copyShareLink.addEventListener('click', copyShareLink);
 

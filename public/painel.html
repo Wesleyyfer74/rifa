@@ -46,7 +46,7 @@
   <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_0%,rgba(217,154,34,0.18),transparent_34rem),linear-gradient(180deg,#050505_0%,#090805_48%,#050505_100%)]"></div>
 
   <header class="sticky top-0 z-40 border-b border-panel-line bg-black/90 backdrop-blur-xl">
-    <div class="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+    <div class="mx-auto flex h-20 max-w-[1600px] items-center justify-between px-6 2xl:px-10">
       <a href="/painel" class="flex items-center gap-3">
         <div class="grid h-11 w-11 place-items-center rounded-2xl border border-gold-300/40 bg-gold-500 text-black shadow-gold">
           <i data-lucide="ticket" class="h-6 w-6"></i>
@@ -57,12 +57,26 @@
         </div>
       </a>
 
-      <button id="campaignsHomeButton" class="hidden items-center gap-2 rounded-2xl border border-panel-line bg-panel-card/90 px-4 py-3 text-sm font-extrabold text-gold-300 transition hover:border-gold-500/50 lg:flex" type="button">
-        <i data-lucide="layout-grid" class="h-5 w-5"></i>
-        Minhas rifas
-      </button>
+      <nav id="mainNavigation" class="hidden items-center gap-1 rounded-2xl border border-panel-line bg-panel-card/90 p-1 shadow-dark lg:flex" aria-label="Menu principal">
+        <button class="nav-item active" type="button" data-tab="campanhas">
+          <i data-lucide="layout-grid"></i>
+          Campanhas
+        </button>
+        <button class="nav-item" type="button" data-tab="compradores">
+          <i data-lucide="users"></i>
+          Compradores
+        </button>
+        <button class="nav-item" type="button" data-tab="historico">
+          <i data-lucide="archive"></i>
+          Historico
+        </button>
+      </nav>
 
       <div class="flex items-center gap-3">
+        <div id="headerBalanceCard" class="header-balance-card" title="Saldo disponivel para saque">
+          <span>Saldo</span>
+          <strong id="headerBalanceValue">R$ 0,00</strong>
+        </div>
         <button id="headerLogoutButton" class="grid h-11 w-11 place-items-center rounded-2xl border border-red-500/30 bg-red-500/10 text-red-300 transition hover:bg-red-500/20" type="button" aria-label="Sair da conta" title="Sair da conta">
           <i data-lucide="log-out" class="h-5 w-5"></i>
         </button>
@@ -77,34 +91,103 @@
       </div>
     </div>
 
+    <div class="border-t border-panel-line px-4 py-3 lg:hidden">
+      <div class="flex gap-2 overflow-x-auto">
+        <button class="mobile-nav-item active" type="button" data-tab="campanhas">Campanhas</button>
+        <button class="mobile-nav-item" type="button" data-tab="compradores">Compradores</button>
+        <button class="mobile-nav-item" type="button" data-tab="historico">Historico</button>
+      </div>
+    </div>
+
   </header>
 
-  <main class="mx-auto max-w-7xl px-6 py-8">
+  <main class="mx-auto max-w-[1600px] px-6 py-10 2xl:px-10">
     <section class="panel-screen" data-screen="campanhas">
-      <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="mb-8 overflow-hidden rounded-[2rem] border border-panel-line bg-panel-card/70 p-7 shadow-dark lg:p-9">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p class="text-sm font-bold uppercase tracking-wide text-gold-300">Rifas do cliente</p>
-          <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-gold-50">Minhas rifas</h1>
-          <p class="mt-2 max-w-2xl text-sm font-medium text-panel-muted">Crie uma rifa completa, gere a pagina de venda automaticamente e compartilhe o link com seus compradores.</p>
+          <p class="text-sm font-extrabold uppercase tracking-[0.24em] text-gold-300">Rifas do cliente</p>
+          <h1 class="mt-2 text-4xl font-black tracking-tight text-gold-50 lg:text-5xl">Minhas rifas</h1>
+          <p class="mt-3 max-w-3xl text-base font-semibold leading-7 text-panel-muted">Crie uma rifa completa, acompanhe vendas, gere a pagina de compra automaticamente e compartilhe o link com seus compradores.</p>
         </div>
-        <button id="openCampaignModal" class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold transition hover:bg-gold-300" type="button">
+        <button id="openCampaignModal" class="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-gold-500 px-7 text-base font-extrabold text-black shadow-gold transition hover:bg-gold-300" type="button">
           <i data-lucide="plus" class="h-5 w-5"></i>
           Criar rifa
         </button>
       </div>
 
-      <div class="mb-6 flex flex-col gap-3 rounded-3xl border border-panel-line bg-panel-card p-4 shadow-dark md:flex-row md:items-center md:justify-between">
+      <div class="mt-8 flex flex-col gap-3 rounded-3xl border border-panel-line bg-black/30 p-4 md:flex-row md:items-center md:justify-between">
         <label class="relative block flex-1">
-          <i data-lucide="search" class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-panel-muted"></i>
+          <i data-lucide="search" class="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-panel-muted"></i>
           <input id="campaignSearch" class="h-12 w-full rounded-2xl border border-panel-line bg-black/40 pl-12 pr-4 text-sm font-semibold text-gold-50 outline-none transition placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Buscar por título, slug ou status">
         </label>
         <div class="flex gap-2">
-          <button class="h-12 rounded-2xl border border-panel-line bg-black/30 px-4 text-sm font-bold text-panel-muted hover:text-gold-100" type="button">Todos</button>
-          <button class="h-12 rounded-2xl border border-gold-500/50 bg-gold-500/10 px-4 text-sm font-bold text-gold-300" type="button">Ativos</button>
+          <button class="h-14 rounded-2xl border border-panel-line bg-black/30 px-5 text-sm font-extrabold text-panel-muted hover:text-gold-100" type="button">Todos</button>
+          <button class="h-14 rounded-2xl border border-gold-500/50 bg-gold-500/10 px-5 text-sm font-extrabold text-gold-300" type="button">Ativos</button>
         </div>
       </div>
 
-      <div id="campaignGrid" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3"></div>
+      </div>
+
+      <div id="campaignGrid" class="grid gap-7 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"></div>
+    </section>
+
+    <section class="panel-screen hidden" data-screen="compradores">
+      <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wide text-gold-300">Compradores</p>
+          <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-gold-50">Tempo real e maiores compradores</h1>
+          <p class="mt-2 max-w-2xl text-sm font-medium text-panel-muted">Acompanhe pedidos recentes e veja quem mais comprou cotas pagas em cada campanha.</p>
+        </div>
+        <label class="grid min-w-full gap-2 lg:min-w-[360px]">
+          <span class="text-sm font-bold text-panel-muted">Campanha</span>
+          <select id="buyersCampaignSelect" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+            <option value="">Selecione uma campanha</option>
+          </select>
+        </label>
+        </div>
+
+      <div class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <section class="overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+          <div class="border-b border-panel-line p-5">
+            <h2 class="text-lg font-extrabold text-gold-50">Pedidos em tempo real</h2>
+            <p class="mt-1 text-sm font-semibold text-panel-muted">Ultimos 20 pedidos pagos ou pendentes.</p>
+          </div>
+          <div id="buyersRealtimeList" class="divide-y divide-panel-line"></div>
+        </section>
+
+        <section class="overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+          <div class="border-b border-panel-line p-5">
+            <h2 class="text-lg font-extrabold text-gold-50">Ranking de baleias</h2>
+            <p class="mt-1 text-sm font-semibold text-panel-muted">Maiores compradores por cotas pagas.</p>
+          </div>
+          <div id="buyersRankingList" class="divide-y divide-panel-line"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="panel-screen hidden" data-screen="historico">
+      <div class="mb-6 flex flex-col gap-3">
+        <p class="text-sm font-bold uppercase tracking-wide text-gold-300">Historico</p>
+        <h1 class="text-3xl font-extrabold tracking-tight text-gold-50">Campanhas e clientes antigos</h1>
+        <p class="max-w-3xl text-sm font-medium text-panel-muted">Campanhas finalizadas ou sorteadas saem da tela principal e ficam registradas aqui com a base consolidada de clientes.</p>
+      </div>
+
+      <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <section class="overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+          <div class="border-b border-panel-line p-5">
+            <h2 class="text-lg font-extrabold text-gold-50">Campanhas antigas</h2>
+          </div>
+          <div id="historyCampaignsList" class="divide-y divide-panel-line"></div>
+        </section>
+
+        <section class="overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+          <div class="border-b border-panel-line p-5">
+            <h2 class="text-lg font-extrabold text-gold-50">Clientes antigos</h2>
+          </div>
+          <div id="historyClientsList" class="divide-y divide-panel-line"></div>
+        </section>
+      </div>
     </section>
 
     <section class="panel-screen hidden" data-screen="perfil">
@@ -156,6 +239,30 @@
           </label>
         </div>
 
+        <div class="grid gap-5 border-b border-panel-line p-6 lg:grid-cols-[1fr_1fr]">
+          <div class="rounded-3xl border border-panel-line bg-black/30 p-5">
+            <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Saldo disponivel</p>
+            <strong id="asaasBalanceValue" class="mt-3 block text-4xl font-black text-gold-50">R$ 0,00</strong>
+            <p id="asaasBalanceStatus" class="mt-2 text-sm font-semibold text-panel-muted">Ative seu recebimento para consultar o saldo disponivel.</p>
+            <button id="refreshAsaasBalanceButton" class="mt-5 h-11 rounded-2xl border border-panel-line px-5 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button">Atualizar saldo</button>
+          </div>
+          <div class="grid gap-3 rounded-3xl border border-panel-line bg-black/30 p-5">
+            <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Saque via Pix</p>
+            <input id="asaasWithdrawValue" type="number" min="1" step="0.01" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Valor do saque">
+            <select id="asaasWithdrawPixType" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+              <option value="">Tipo da chave Pix</option>
+              <option value="cpf">CPF</option>
+              <option value="cnpj">CNPJ</option>
+              <option value="email">Email</option>
+              <option value="telefone">Telefone</option>
+              <option value="aleatoria">Chave aleatoria</option>
+            </select>
+            <input id="asaasWithdrawPixKey" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Chave Pix para receber o saque">
+            <p class="text-sm font-semibold leading-6 text-panel-muted">Informe o Pix onde deseja receber este saque. A chave pode ser diferente em cada saque.</p>
+            <button id="requestAsaasWithdrawalButton" class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="button">Solicitar saque</button>
+          </div>
+        </div>
+
         <div class="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
           <p id="profileFeedback" class="hidden rounded-2xl border px-4 py-3 text-sm font-bold"></p>
           <div class="flex flex-col-reverse gap-3 sm:ml-auto sm:flex-row">
@@ -201,9 +308,9 @@
     </article>
   </template>
 
-  <div id="campaignModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/75 px-4 py-8 backdrop-blur-sm">
-    <div class="w-full max-w-4xl overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
-      <div class="flex items-center justify-between border-b border-panel-line p-6">
+  <div id="campaignModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-hidden bg-black/75 px-4 py-4 backdrop-blur-sm">
+    <div class="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+      <div class="flex shrink-0 items-center justify-between border-b border-panel-line p-5">
         <div>
           <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Nova rifa</p>
           <h2 class="mt-1 text-2xl font-extrabold text-gold-50">Criar rifa</h2>
@@ -213,7 +320,13 @@
         </button>
       </div>
 
-      <form id="campaignForm" class="grid gap-6 p-6">
+      <form id="campaignForm" class="flex min-h-0 flex-1 flex-col">
+        <div class="grid min-h-0 flex-1 gap-4 overflow-y-auto p-5">
+        <div class="rounded-3xl border border-panel-line bg-black/20 p-5">
+          <p class="text-xs font-extrabold uppercase tracking-[0.22em] text-gold-300">Dados principais</p>
+          <p class="mt-1 text-sm font-semibold text-panel-muted">Essas informacoes aparecem na pagina publica da rifa.</p>
+        </div>
+
         <label class="grid gap-2">
           <span class="text-sm font-bold text-panel-muted">Título</span>
           <input name="titulo" required maxlength="180" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: R$50.000">
@@ -226,8 +339,9 @@
           </label>
 
           <label class="grid gap-2">
-            <span class="text-sm font-bold text-panel-muted">Data do sorteio</span>
+            <span class="text-sm font-bold text-panel-muted">Data e horario do sorteio</span>
             <input name="data_sorteio" type="datetime-local" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+            <span class="text-xs font-semibold text-panel-muted">Opcional. Essa data aparece na pagina de compra.</span>
           </label>
         </div>
 
@@ -236,38 +350,54 @@
           <input name="imagem" required accept="image/png,image/jpeg,image/webp,image/gif" type="file" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 py-3 text-sm font-semibold text-gold-50 outline-none file:mr-4 file:rounded-xl file:border-0 file:bg-gold-500 file:px-3 file:py-1 file:text-xs file:font-extrabold file:text-black focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
         </label>
 
+        <div class="rounded-3xl border border-panel-line bg-black/20 p-5">
+          <p class="text-xs font-extrabold uppercase tracking-[0.22em] text-gold-300">Cotas e regras de compra</p>
+          <p class="mt-1 text-sm font-semibold text-panel-muted">Configure preco, quantidade total e limites que o comprador tera no checkout.</p>
+        </div>
+
         <div class="grid gap-5 md:grid-cols-2">
           <label class="grid gap-2">
-            <span class="text-sm font-bold text-panel-muted">Valor da Cota</span>
+            <span class="text-sm font-bold text-panel-muted">Valor de cada cota</span>
             <input name="valor_cota" required min="0.01" step="0.01" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10.00">
+            <span class="text-xs font-semibold text-panel-muted">Preco unitario pago pelo comprador.</span>
           </label>
 
           <label class="grid gap-2">
             <span class="text-sm font-bold text-panel-muted">Quantidade Máxima de Cotas</span>
             <input name="total_cotas" required min="1" step="1" type="number" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="10000">
+            <span class="text-xs font-semibold text-panel-muted">Quantidade total de cotas disponiveis para venda.</span>
           </label>
         </div>
 
-        <div class="grid gap-5 md:grid-cols-4">
+        <div class="grid gap-5 md:grid-cols-3">
           <label class="grid gap-2">
-            <span class="text-sm font-bold text-panel-muted">Reserva expira em</span>
-            <input name="reserva_expira_minutos" required min="5" max="1440" step="1" type="number" value="15" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="15">
+            <span class="text-sm font-bold text-panel-muted">Prazo para pagar o PIX</span>
+            <select name="reserva_expira_minutos" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+              <option value="15">15 minutos</option>
+              <option value="30">30 minutos</option>
+              <option value="60">1 hora</option>
+              <option value="120">2 horas</option>
+              <option value="1440">24 horas</option>
+            </select>
+            <span class="text-xs font-semibold text-panel-muted">Tempo que as cotas ficam separadas enquanto o comprador paga.</span>
           </label>
 
           <label class="grid gap-2">
-            <span class="text-sm font-bold text-panel-muted">Minimo por pedido</span>
+            <span class="text-sm font-bold text-panel-muted">Minimo de cotas por compra</span>
             <input name="min_cotas_por_pedido" required min="1" step="1" type="number" value="1" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="1">
+            <span class="text-xs font-semibold text-panel-muted">O sistema tambem exige minimo de R$ 5,00 por compra automaticamente.</span>
           </label>
 
           <label class="grid gap-2">
-            <span class="text-sm font-bold text-panel-muted">Maximo por pedido</span>
+            <span class="text-sm font-bold text-panel-muted">Maximo de cotas por compra</span>
             <input name="max_cotas_por_pedido" required min="1" max="1000" step="1" type="number" value="100" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="100">
+            <span class="text-xs font-semibold text-panel-muted">Limite por pedido para controlar compras muito grandes.</span>
           </label>
+        </div>
 
-          <label class="grid gap-2">
-            <span class="text-sm font-bold text-panel-muted">WhatsApp suporte</span>
-            <input name="whatsapp_suporte" inputmode="tel" maxlength="30" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="(65) 99999-9999">
-          </label>
+        <div class="rounded-3xl border border-panel-line bg-black/20 p-5">
+          <p class="text-xs font-extrabold uppercase tracking-[0.22em] text-gold-300">Textos da pagina de venda</p>
+          <p class="mt-1 text-sm font-semibold text-panel-muted">Conte ao comprador como funciona a campanha, regras e pagamento.</p>
         </div>
 
         <label class="grid gap-2">
@@ -288,18 +418,65 @@
         </div>
 
         <label class="grid gap-2 md:max-w-xs">
-          <span class="text-sm font-bold text-panel-muted">Status inicial</span>
+          <span class="text-sm font-bold text-panel-muted">Como a rifa vai iniciar</span>
           <select name="status" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
-            <option value="ativo">Ativa</option>
-            <option value="pausado">Pausada</option>
+            <option value="ativo">Publicada e vendendo</option>
+            <option value="pausado">Pausada, sem vender ainda</option>
           </select>
+          <span class="text-xs font-semibold text-panel-muted">Use pausada se quiser revisar a pagina antes de liberar vendas.</span>
         </label>
 
-        <div class="flex flex-col-reverse gap-3 border-t border-panel-line pt-5 sm:flex-row sm:justify-end">
+        </div>
+
+        <div class="flex shrink-0 flex-col-reverse gap-3 border-t border-panel-line bg-panel-card p-5 sm:flex-row sm:justify-end">
           <button id="cancelCampaignModal" class="h-12 rounded-2xl border border-panel-line px-5 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button">Cancelar</button>
           <button class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Salvar campanha</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="disclosureModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/75 px-4 py-8 backdrop-blur-sm">
+    <div class="w-full max-w-2xl overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+      <div class="flex items-start justify-between gap-5 border-b border-panel-line p-6">
+        <div>
+          <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Configuracoes > Divulgacao</p>
+          <h2 id="disclosureTitle" class="mt-1 text-2xl font-extrabold text-gold-50">Divulgar campanha</h2>
+          <p class="mt-2 max-w-xl text-sm font-semibold leading-relaxed text-panel-muted">Dispare uma mensagem para compradores pagos de campanhas anteriores deste administrador.</p>
+        </div>
+        <button id="closeDisclosureModal" class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-panel-line text-panel-muted hover:text-gold-300" type="button" aria-label="Fechar divulgacao">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <div id="disclosureBody" class="grid gap-5 p-6"></div>
+
+      <div class="flex flex-col-reverse gap-3 border-t border-panel-line p-6 sm:flex-row sm:justify-end">
+        <button id="cancelDisclosureModal" class="h-12 rounded-2xl border border-panel-line px-5 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button">Cancelar</button>
+        <button id="confirmDisclosureButton" class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300 disabled:cursor-not-allowed disabled:opacity-50" type="button">Disparar Nova Campanha via WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmActionModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/75 px-4 py-8 backdrop-blur-sm">
+    <div class="w-full max-w-xl overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
+      <div class="flex items-start justify-between gap-5 border-b border-panel-line p-6">
+        <div>
+          <p id="confirmActionEyebrow" class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Confirmacao</p>
+          <h2 id="confirmActionTitle" class="mt-1 text-2xl font-extrabold text-gold-50">Tem certeza?</h2>
+          <p id="confirmActionMessage" class="mt-2 max-w-xl text-sm font-semibold leading-relaxed text-panel-muted"></p>
+        </div>
+        <button id="closeConfirmActionModal" class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-panel-line text-panel-muted hover:text-gold-300" type="button" aria-label="Fechar confirmacao">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <div id="confirmActionWarning" class="m-6 rounded-3xl border border-red-500/30 bg-red-500/10 p-5 text-sm font-bold leading-relaxed text-red-200"></div>
+
+      <div class="flex flex-col-reverse gap-3 border-t border-panel-line p-6 sm:flex-row sm:justify-end">
+        <button id="cancelConfirmAction" class="h-12 rounded-2xl border border-panel-line px-5 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button">Cancelar</button>
+        <button id="confirmActionButton" class="h-12 rounded-2xl bg-red-600 px-5 text-sm font-extrabold text-white shadow-dark hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50" type="button">Confirmar</button>
+      </div>
     </div>
   </div>
 

@@ -1,5 +1,8 @@
 const prisma = require('../../database/prisma');
+const asaasProvider = require('./asaas.provider');
+const asaasService = require('./asaas.service');
 const mercadoPago = require('./mercado-pago.provider');
+const mercadoPagoOAuth = require('./mercado-pago-oauth.service');
 const { env } = require('../../config/env');
 const { emitPedidoPago } = require('../esteira/esteira.events');
 const { presentEsteiraPedido } = require('../esteira/esteira.presenter');
@@ -18,11 +21,7 @@ function ensureAllowedIp(req) {
 }
 
 async function generatePixForPedido(pedido) {
-  if (env.paymentProvider !== 'mercado_pago') {
-    throw new HttpError(503, 'Gateway PIX nao configurado. Defina PAYMENT_PROVIDER=mercado_pago e as credenciais do Mercado Pago.');
-  }
-
-  const pix = await mercadoPago.createPixPayment(pedido);
+  const pix = await createPixByAdminGateway(pedido);
 
   return prisma.pedido.update({
     where: { id: pedido.id },
@@ -41,6 +40,48 @@ async function generatePixForPedido(pedido) {
       },
     },
   });
+}
+
+async function createPixByAdminGateway(pedido) {
+  const adminId = pedido.campanha?.administradorId;
+
+  if (!adminId) {
+    const accessToken = await resolveMercadoPagoAccessToken(null);
+    return mercadoPago.createPixPayment(pedido, accessToken);
+  }
+
+  const admin = await prisma.administrador.findUnique({
+    where: { id: adminId },
+  });
+
+  const hasAsaasDirect = asaasService.hasDirectAccount(admin);
+  const hasAsaasSplit = Boolean(admin?.asaasWalletId && asaasService.isPlatformConfigured());
+
+  if (!admin?.mercadoPagoAccessToken && !hasAsaasSplit && !hasAsaasDirect) {
+    throw new HttpError(409, 'Conecte Mercado Pago ou Asaas no perfil do dono da rifa antes de vender.');
+  }
+
+  if (admin.gatewayPreferido === 'asaas_proprio' && hasAsaasDirect) {
+    const credentials = await asaasService.getAdminCredentials(adminId);
+    return asaasProvider.createPixPayment(pedido, credentials);
+  }
+
+  if (admin.gatewayPreferido === 'asaas' && hasAsaasSplit) {
+    const credentials = await asaasService.getAdminCredentials(adminId);
+    return asaasProvider.createPixPayment(pedido, credentials);
+  }
+
+  if (admin.mercadoPagoAccessToken) {
+    const accessToken = await mercadoPagoOAuth.getAdminAccessToken(adminId);
+    return mercadoPago.createPixPayment(pedido, accessToken);
+  }
+
+  if (hasAsaasSplit) {
+    const credentials = await asaasService.getAdminCredentials(adminId);
+    return asaasProvider.createPixPayment(pedido, credentials);
+  }
+
+  throw new HttpError(409, 'Crie a subconta Asaas do dono da rifa antes de vender.');
 }
 
 async function markPedidoAsPaid({ gatewayPaymentId, gatewayPayload }) {
@@ -89,8 +130,39 @@ async function markPedidoAsPaid({ gatewayPaymentId, gatewayPayload }) {
   });
 }
 
+async function resolveMercadoPagoAccessToken(adminId) {
+  if (adminId) {
+    return mercadoPagoOAuth.getAdminAccessToken(adminId);
+  }
+
+  if (env.mercadoPagoAccessToken) {
+    return env.mercadoPagoAccessToken;
+  }
+
+  throw new HttpError(409, 'Conecte o Mercado Pago no perfil do dono da rifa antes de vender.');
+}
+
+async function findPedidoByGatewayPaymentId(gatewayPaymentId) {
+  return prisma.pedido.findUnique({
+    where: { gatewayPaymentId: String(gatewayPaymentId) },
+    include: {
+      campanha: {
+        select: {
+          id: true,
+          slug: true,
+          administradorId: true,
+        },
+      },
+    },
+  });
+}
+
 async function handleWebhook(req) {
   ensureAllowedIp(req);
+
+  if (req.body?.event && req.body?.payment) {
+    return handleAsaasWebhook(req);
+  }
 
   if (env.paymentProvider !== 'mercado_pago') {
     return {
@@ -101,7 +173,9 @@ async function handleWebhook(req) {
   }
 
   const { paymentId } = mercadoPago.validateWebhookSignature(req);
-  const payment = await mercadoPago.getPayment(paymentId);
+  const pedidoRegistrado = await findPedidoByGatewayPaymentId(paymentId);
+  const accessToken = await resolveMercadoPagoAccessToken(pedidoRegistrado?.campanha?.administradorId);
+  const payment = await mercadoPago.getPayment(paymentId, accessToken);
   const normalizedStatus = payment.status;
 
   if (normalizedStatus === 'approved' || normalizedStatus === 'pago') {
@@ -123,6 +197,44 @@ async function handleWebhook(req) {
     handled: false,
     gateway_payment_id: String(payment.id),
     gateway_status: normalizedStatus,
+  };
+}
+
+async function handleAsaasWebhook(req) {
+  if (env.asaasWebhookToken) {
+    const received = req.get('asaas-access-token')
+      || req.get('access_token')
+      || req.get('authorization')?.replace(/^Bearer\s+/i, '');
+
+    if (received !== env.asaasWebhookToken) {
+      throw new HttpError(401, 'Webhook Asaas sem token valido.');
+    }
+  }
+
+  const event = String(req.body.event || '');
+  const payment = req.body.payment || {};
+
+  if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+    const pedido = await markPedidoAsPaid({
+      gatewayPaymentId: String(payment.id),
+      gatewayPayload: req.body,
+    });
+
+    await notifyPaymentConfirmed(pedido);
+
+    return {
+      handled: true,
+      gateway: 'asaas',
+      pedido_id: pedido.id,
+      status_pagamento: pedido.statusPagamento,
+    };
+  }
+
+  return {
+    handled: false,
+    gateway: 'asaas',
+    gateway_payment_id: payment.id ? String(payment.id) : null,
+    gateway_status: event,
   };
 }
 

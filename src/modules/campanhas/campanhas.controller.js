@@ -3,14 +3,21 @@ const campanhasRepository = require('./campanhas.repository');
 const authRepository = require('../auth/auth.repository');
 const cotasRepository = require('../cotas/cotas.repository');
 const pedidosRepository = require('../pedidos/pedidos.repository');
+const asaasService = require('../payments/asaas.service');
 const { onPedidoPago } = require('../esteira/esteira.events');
 const { presentEsteiraPedido } = require('../esteira/esteira.presenter');
+const {
+  buildCampaignUrl,
+  enqueueCampaignRemarketing,
+} = require('./whatsapp-remarketing.service');
 const { HttpError } = require('../../utils/http-error');
 const { slugify } = require('../../utils/slugify');
 const {
   getCampanhaBySlugParams,
   parseOrThrow,
 } = require('../../validators/public-api.validators');
+
+const MIN_ORDER_VALUE = 5;
 
 async function listPublic(req, res, next) {
   try {
@@ -37,9 +44,8 @@ async function getPublicBySlug(req, res, next) {
       await cotasRepository.ensureCotas(campanha, tx);
 
       const cotas = await cotasRepository.listByCampaign(campanha.id, tx);
-      const numerosReservados = cotas.filter((cota) => cota.status === 'reservado').map((cota) => cota.numero);
-      const numerosPagos = cotas.filter((cota) => cota.status === 'pago').map((cota) => cota.numero);
-      const numerosOcupados = cotas.filter((cota) => cota.status === 'reservado' || cota.status === 'pago').map((cota) => cota.numero);
+      const cotasReservadas = cotas.filter((cota) => cota.status === 'reservado').length;
+      const cotasPagas = cotas.filter((cota) => cota.status === 'pago').length;
 
       return {
         id: campanha.id,
@@ -63,21 +69,10 @@ async function getPublicBySlug(req, res, next) {
           imagem_url: rifinha.imagemUrl,
           ordem: rifinha.ordem,
         })),
-        cotas: cotas.map((cota) => ({
-          numero: cota.numero,
-          label: String(cota.numero).padStart(3, '0'),
-          status: cota.status,
-          disponivel: cota.status === 'disponivel',
-          reservado: cota.status === 'reservado',
-          pago: cota.status === 'pago',
-        })),
-        numeros_ocupados: numerosOcupados,
-        numeros_reservados: numerosReservados,
-        numeros_pagos: numerosPagos,
         resumo_cotas: {
           disponiveis: cotas.filter((cota) => cota.status === 'disponivel').length,
-          reservadas: numerosReservados.length,
-          pagas: numerosPagos.length,
+          reservadas: cotasReservadas,
+          pagas: cotasPagas,
         },
       };
     });
@@ -149,6 +144,120 @@ async function listAdmin(req, res, next) {
   }
 }
 
+async function verificarDisparo(req, res, next) {
+  try {
+    const campanha = await campanhasRepository.findByIdForAdmin(req.params.id, req.admin_id);
+
+    if (!campanha) {
+      throw new HttpError(404, 'Campanha nao encontrada para este administrador.');
+    }
+
+    const [campanhasAnteriores, contatos] = await Promise.all([
+      campanhasRepository.countPreviousForAdmin(campanha),
+      campanhasRepository.listUniquePaidBuyerPhonesFromPreviousCampaigns(campanha),
+    ]);
+
+    return res.json({
+      data: {
+        pode_disparar: campanhasAnteriores > 0,
+        campanhas_anteriores: campanhasAnteriores,
+        contatos_disponiveis: contatos.length,
+        motivo: campanhasAnteriores === 0
+          ? 'Esta e sua primeira campanha. O banco de dados de leads esta sendo abastecido.'
+          : null,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function dispararWhatsapp(req, res, next) {
+  try {
+    const campanha = await campanhasRepository.findByIdForAdmin(req.params.id, req.admin_id);
+
+    if (!campanha) {
+      throw new HttpError(404, 'Campanha nao encontrada para este administrador.');
+    }
+
+    const campanhasAnteriores = await campanhasRepository.countPreviousForAdmin(campanha);
+
+    if (campanhasAnteriores === 0) {
+      throw new HttpError(403, 'Esta e sua primeira campanha. O banco de dados de leads esta sendo abastecido.');
+    }
+
+    const contatos = await campanhasRepository.listUniquePaidBuyerPhonesFromPreviousCampaigns(campanha);
+
+    if (!contatos.length) {
+      throw new HttpError(422, 'Nenhum comprador pago encontrado em campanhas anteriores.');
+    }
+
+    const result = enqueueCampaignRemarketing({ campanha, contatos });
+
+    return res.status(202).json({
+      data: {
+        status: 'queued',
+        campanha_id: campanha.id,
+        titulo: campanha.titulo,
+        landing_url: buildCampaignUrl(campanha),
+        contatos_enfileirados: result.queued,
+        mensagem_template: result.message,
+        integracao_whatsapp_configurada: result.integration_ready,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+function formatPercent(value) {
+  return `${Number(value || 0).toFixed(2)}%`;
+}
+
+async function compradoresStats(req, res, next) {
+  try {
+    const campanha = await campanhasRepository.findByIdForAdmin(req.params.id, req.admin_id);
+
+    if (!campanha) {
+      throw new HttpError(404, 'Campanha nao encontrada para este administrador.');
+    }
+
+    const stats = await campanhasRepository.getCompradoresStats(campanha.id, req.admin_id);
+
+    return res.json({
+      data: {
+        campanha: {
+          id: campanha.id,
+          titulo: campanha.titulo,
+          total_cotas: campanha.totalCotas,
+        },
+        tempo_real: stats.tempoReal.map((pedido) => ({
+          id: pedido.id,
+          nome: pedido.nome_comprador,
+          whatsapp: pedido.whatsapp_comprador,
+          quantidade_cotas: Number(pedido.quantidade_cotas || 0),
+          porcentagem_adquirida: Number(pedido.porcentagem_adquirida || 0),
+          porcentagem_adquirida_formatada: formatPercent(pedido.porcentagem_adquirida),
+          status: pedido.status,
+          criado_em: pedido.created_at,
+        })),
+        ranking_baleias: stats.rankingBaleias.map((comprador, index) => ({
+          posicao: index + 1,
+          nome: comprador.nome_comprador,
+          whatsapp: comprador.whatsapp_comprador,
+          total_cotas_pagas: Number(comprador.total_cotas_pagas || 0),
+          porcentagem_total: Number(comprador.porcentagem_total || 0),
+          porcentagem_total_formatada: formatPercent(comprador.porcentagem_total),
+          pedidos_pagos: Number(comprador.pedidos_pagos || 0),
+          ultimo_pagamento_em: comprador.ultimo_pagamento_em,
+        })),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function buildUniqueSlug(title, requestedSlug) {
   const baseSlug = slugify(requestedSlug || title);
   let candidate = baseSlug;
@@ -160,6 +269,46 @@ async function buildUniqueSlug(title, requestedSlug) {
   }
 
   return candidate;
+}
+
+function isSlugCollision(error) {
+  const target = error?.meta?.target;
+
+  return error?.code === 'P2002'
+    && (
+      (Array.isArray(target) && target.includes('slug'))
+      || String(target || '').includes('slug')
+    );
+}
+
+async function createCampaignWithUniqueSlug(data, title, requestedSlug) {
+  const baseSlug = slugify(requestedSlug || title);
+  let suffix = 1;
+
+  while (suffix <= 20) {
+    const candidate = suffix === 1 ? baseSlug : `${baseSlug}-${suffix}`;
+
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const campanha = await campanhasRepository.create({
+          ...data,
+          slug: candidate,
+        }, tx);
+
+        await cotasRepository.ensureCotas(campanha, tx);
+
+        return campanha;
+      });
+    } catch (error) {
+      if (!isSlugCollision(error)) {
+        throw error;
+      }
+
+      suffix += 1;
+    }
+  }
+
+  throw new HttpError(409, 'Nao foi possivel gerar um slug unico para esta campanha.');
 }
 
 function parseJsonField(value, fallback = {}) {
@@ -198,6 +347,27 @@ function cleanString(value) {
   return cleaned === '' ? null : cleaned;
 }
 
+async function ensureAdminHasPaymentGateway(adminId) {
+  if (!adminId) return;
+
+  const admin = await prisma.administrador.findUnique({
+    where: { id: adminId },
+    select: {
+      mercadoPagoAccessToken: true,
+      gatewayPreferido: true,
+      asaasApiKey: true,
+      asaasWalletId: true,
+    },
+  });
+
+  const hasAsaasDirect = asaasService.hasDirectAccount(admin);
+  const hasAsaasSplit = Boolean(admin?.asaasWalletId && asaasService.isPlatformConfigured());
+
+  if (!admin?.mercadoPagoAccessToken && !hasAsaasSplit && !hasAsaasDirect) {
+    throw new HttpError(409, 'Configure o recebimento por Pix no perfil antes de criar campanhas.');
+  }
+}
+
 async function create(req, res, next) {
   try {
     const {
@@ -231,10 +401,13 @@ async function create(req, res, next) {
     const normalizedQuotaTotal = parsePositiveInteger(quotaTotal, 'total_cotas');
     const minCotasPorPedido = parsePositiveInteger(parsedMetadata.min_cotas_por_pedido || 1, 'min_cotas_por_pedido');
     const maxCotasPorPedido = parsePositiveInteger(parsedMetadata.max_cotas_por_pedido || normalizedQuotaTotal, 'max_cotas_por_pedido');
+    const minCotasByValue = Math.ceil(MIN_ORDER_VALUE / normalizedQuotaValue);
     const reservaExpiraMinutos = parsePositiveInteger(parsedMetadata.reserva_expira_minutos || 15, 'reserva_expira_minutos');
     const premioPrincipal = cleanString(parsedMetadata.premio_principal);
     const campaignDescription = cleanString(descricao);
     const campaignRules = cleanString(regulamento);
+
+    await ensureAdminHasPaymentGateway(req.admin_id);
 
     if (!titulo || String(titulo).trim().length < 3) {
       throw new HttpError(422, 'titulo precisa ter pelo menos 3 caracteres.');
@@ -252,12 +425,16 @@ async function create(req, res, next) {
       throw new HttpError(422, 'regulamento e obrigatorio.');
     }
 
-    if (!['ativo', 'pausado', 'finalizado'].includes(status || 'ativo')) {
+    if (!['ativo', 'pausado', 'finalizado', 'sorteado'].includes(status || 'ativo')) {
       throw new HttpError(422, 'status invalido.');
     }
 
     if (minCotasPorPedido > maxCotasPorPedido) {
       throw new HttpError(422, 'min_cotas_por_pedido nao pode ser maior que max_cotas_por_pedido.');
+    }
+
+    if (minCotasByValue > maxCotasPorPedido) {
+      throw new HttpError(422, `Com este valor de cota, o maximo por compra precisa ser pelo menos ${minCotasByValue} cotas para atingir a compra minima de R$ 5,00.`);
     }
 
     if (maxCotasPorPedido > normalizedQuotaTotal) {
@@ -302,15 +479,14 @@ async function create(req, res, next) {
       reserva_expira_minutos: reservaExpiraMinutos,
       min_cotas_por_pedido: minCotasPorPedido,
       max_cotas_por_pedido: maxCotasPorPedido,
-      whatsapp_suporte: cleanString(parsedMetadata.whatsapp_suporte),
+      valor_minimo_compra: MIN_ORDER_VALUE,
       instrucoes_pagamento: cleanString(parsedMetadata.instrucoes_pagamento),
     };
 
-    const campanha = await campanhasRepository.create({
+    const campanha = await createCampaignWithUniqueSlug({
       usuarioClienteId: ownerId,
       administradorId: req.admin_id,
       titulo,
-      slug: await buildUniqueSlug(titulo, slug),
       descricao: campaignDescription,
       regulamento: campaignRules,
       valorCota: normalizedQuotaValue,
@@ -330,9 +506,7 @@ async function create(req, res, next) {
           ordem: rifinha.ordem ?? index,
         })),
       },
-    });
-
-    await cotasRepository.ensureCotas(campanha);
+    }, titulo, slug);
 
     return res.status(201).json({ data: campanha });
   } catch (error) {
@@ -411,6 +585,37 @@ async function remove(req, res, next) {
     await campanhasRepository.remove(req.params.id);
     return res.status(204).send();
   } catch (error) {
+    const message = String(error.message || '');
+
+    if (
+      error.code === 'P2003'
+      || message.includes('pedidos_campanha_id_fkey')
+      || message.includes('violates RESTRICT')
+      || message.includes('is referenced from table "pedidos"')
+    ) {
+      return next(new HttpError(409, 'Esta campanha ja possui pedidos. Para preservar o historico de vendas, finalize a campanha em vez de excluir.'));
+    }
+
+    return next(error);
+  }
+}
+
+async function finalizarCampanha(req, res, next) {
+  try {
+    const ownedCampanha = await campanhasRepository.findByIdForAdmin(req.params.id, req.admin_id);
+
+    if (!ownedCampanha) {
+      throw new HttpError(404, 'Campanha nao encontrada para este administrador.');
+    }
+
+    if (['finalizado', 'sorteado'].includes(ownedCampanha.status)) {
+      return res.json({ data: ownedCampanha });
+    }
+
+    const campanha = await campanhasRepository.finalizar(req.params.id);
+
+    return res.json({ data: campanha });
+  } catch (error) {
     return next(error);
   }
 }
@@ -422,7 +627,11 @@ module.exports = {
   streamEsteiraBySlug,
   listByOwner,
   listAdmin,
+  verificarDisparo,
+  dispararWhatsapp,
+  compradoresStats,
   create,
   update,
   remove,
+  finalizarCampanha,
 };

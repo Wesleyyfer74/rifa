@@ -7,8 +7,6 @@ const getCampanhaBySlugParams = z.object({
   slug: z.string().trim().min(3).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 }).strict();
 
-const cotasArray = z.array(z.number().int().min(1)).min(1).max(1000);
-
 const reservarPedidoBody = z.object({
   campanha_id: uuid.optional(),
   campanhaId: uuid.optional(),
@@ -22,9 +20,6 @@ const reservarPedidoBody = z.object({
   quantidade: z.number().int().min(1).max(1000).optional(),
   quantidade_cotas: z.number().int().min(1).max(1000).optional(),
   quantidadeCotas: z.number().int().min(1).max(1000).optional(),
-  cotas: cotasArray.optional(),
-  numeros: cotasArray.optional(),
-  cotasReservadas: cotasArray.optional(),
 }).strict().superRefine((data, ctx) => {
   if (!data.campanha_id && !data.campanhaId) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['campanha_id'], message: 'campanha_id e obrigatorio.' });
@@ -38,23 +33,14 @@ const reservarPedidoBody = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['whatsapp_comprador'], message: 'whatsapp_comprador e obrigatorio.' });
   }
 
-  const selectedSources = [data.cotas, data.numeros, data.cotasReservadas].filter(Boolean).length;
   const requestedQuantity = data.quantidade || data.quantidade_cotas || data.quantidadeCotas;
 
-  if (!requestedQuantity && selectedSources === 0) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cotas'], message: 'Informe cotas ou quantidade.' });
-  }
-
-  if (requestedQuantity && selectedSources > 0) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['quantidade'], message: 'Use quantidade ou cotas escolhidas, nao ambos.' });
+  if (!requestedQuantity) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['quantidade_cotas'], message: 'quantidade_cotas e obrigatoria.' });
   }
 
   if ([data.quantidade, data.quantidade_cotas, data.quantidadeCotas].filter(Boolean).length > 1) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['quantidade_cotas'], message: 'Use apenas um campo de quantidade.' });
-  }
-
-  if (selectedSources > 1) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cotas'], message: 'Use apenas um campo de cotas: cotas, numeros ou cotasReservadas.' });
   }
 });
 

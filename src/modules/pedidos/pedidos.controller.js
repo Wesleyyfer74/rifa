@@ -1,6 +1,8 @@
 const campanhasRepository = require('../campanhas/campanhas.repository');
 const pedidosRepository = require('./pedidos.repository');
 const pedidosService = require('./pedidos.service');
+const paymentsService = require('../payments/payments.service');
+const { env } = require('../../config/env');
 const { HttpError } = require('../../utils/http-error');
 const {
   reservarPedidoBody,
@@ -12,14 +14,24 @@ async function reservar(req, res, next) {
   try {
     const body = parseOrThrow(reservarPedidoBody, req.body);
 
-    const pedido = await pedidosService.reservePendingOrder({
+    let pedido = await pedidosService.reservePendingOrder({
       campanhaId: body.campanha_id || body.campanhaId,
       compradorNome: body.nome_comprador || body.nome || body.compradorNome,
       compradorWhatsapp: body.whatsapp_comprador || body.whatsapp || body.compradorWhatsapp,
       compradorEmail: body.compradorEmail,
       quantidade: body.quantidade || body.quantidade_cotas || body.quantidadeCotas,
-      numeros: body.cotas || body.numeros || body.cotasReservadas,
     });
+    const chancePercentual = pedido.chancePercentual;
+    const chancePercentualLabel = pedido.chancePercentualLabel;
+
+    if (env.paymentProvider === 'mercado_pago') {
+      try {
+        pedido = await paymentsService.generatePixForPedido(pedido);
+      } catch (error) {
+        await pedidosService.cancelPendingOrder(pedido.id, error.message);
+        throw error;
+      }
+    }
 
     return res.status(201).json({
       success: true,
@@ -28,11 +40,15 @@ async function reservar(req, res, next) {
         id: pedido.id,
         campanha_id: pedido.campanhaId,
         status_pagamento: pedido.statusPagamento,
-        cotas: pedido.cotasReservadas,
         quantidade_cotas: pedido.cotasReservadas.length,
-        chance_percentual: pedido.chancePercentual,
-        chance_percentual_label: pedido.chancePercentualLabel,
+        chance_percentual: chancePercentual,
+        chance_percentual_label: chancePercentualLabel,
         valor_total: Number(pedido.valorTotal),
+        pix_copia_cola: pedido.pixCopiaCola,
+        pix_qr_code: pedido.pixQrCode,
+        gateway_provider: pedido.gatewayProvider,
+        gateway_payment_id: pedido.gatewayPaymentId,
+        pix_gateway_configurado: env.paymentProvider === 'mercado_pago',
         expires_at: pedido.expiresAt,
       },
     });
@@ -76,7 +92,10 @@ async function getStatus(req, res, next) {
         pago: pedido.statusPagamento === 'pago',
         expirado: pedido.statusPagamento === 'expirado',
         valor_total: Number(pedido.valorTotal),
-        cotas_reservadas: pedido.cotasReservadas,
+        quantidade_cotas: pedido.cotasReservadas.length,
+        pix_copia_cola: pedido.pixCopiaCola,
+        pix_qr_code: pedido.pixQrCode,
+        gateway_provider: pedido.gatewayProvider,
         expires_at: pedido.expiresAt,
         paid_at: pedido.paidAt,
       },

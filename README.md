@@ -130,10 +130,45 @@ Para ativar PIX via Mercado Pago:
 PAYMENT_PROVIDER="mercado_pago"
 ```
 
+Com essa opcao ativa, o endpoint publico `POST /api/v1/pedidos/reservar` gera o PIX automaticamente apos reservar as cotas. A landing page recebe `pix_qr_code` e `pix_copia_cola`, e o Mercado Pago confirma o pagamento chamando:
+
+```text
+https://rifa-production-eef0.up.railway.app/api/v1/webhooks/pagamento
+```
+
+Cadastre essa URL no painel do Mercado Pago em Webhooks/Notificacoes de pagamento. Em ambiente diferente, troque o dominio e mantenha o caminho `/api/v1/webhooks/pagamento`.
+
+O dono da rifa deve acessar `Painel > Perfil > Gateway de pagamento` e clicar em **Conectar Mercado Pago**. Ele autoriza sua aplicacao sem informar senha. Depois disso, os PIX daquela conta sao criados no Mercado Pago dele.
+
+Tambem e possivel usar **Asaas com subcontas e split**. Nesse modelo, a sua conta/CNPJ Asaas cria uma subconta para cada dono de rifa via API. O Asaas retorna `apiKey` e `walletId`; o sistema salva esses dados com seguranca e usa o `walletId` no split para repassar automaticamente a parte do dono em cada venda.
+
+### `MERCADO_PAGO_CLIENT_ID`
+
+Obrigatorio para o botao **Conectar Mercado Pago**. Identificador da sua aplicacao criada no painel de desenvolvedor do Mercado Pago.
+
+```env
+MERCADO_PAGO_CLIENT_ID="seu-client-id"
+```
+
+### `MERCADO_PAGO_CLIENT_SECRET`
+
+Obrigatorio para trocar o codigo de autorizacao pelo token da conta do dono da rifa.
+
+```env
+MERCADO_PAGO_CLIENT_SECRET="seu-client-secret"
+```
+
+### `MERCADO_PAGO_REDIRECT_URI`
+
+Opcional se `PUBLIC_APP_URL` estiver correto. Precisa ser a mesma URL cadastrada na aplicacao Mercado Pago.
+
+```env
+MERCADO_PAGO_REDIRECT_URI="https://rifa-production-eef0.up.railway.app/api/v1/admin/gateways/mercado-pago/callback"
+```
+
 ### `MERCADO_PAGO_ACCESS_TOKEN`
 
-Obrigatorio somente quando `PAYMENT_PROVIDER=mercado_pago`.
-Token privado do Mercado Pago usado para criar pagamentos PIX e consultar pagamentos recebidos no webhook.
+Opcional. Token global de fallback para testes ou conta central. Para o modelo correto de criadores conectados, prefira `MERCADO_PAGO_CLIENT_ID` e `MERCADO_PAGO_CLIENT_SECRET`.
 
 ```env
 MERCADO_PAGO_ACCESS_TOKEN="APP_USR-..."
@@ -148,12 +183,80 @@ Chave secreta configurada no painel de webhooks do Mercado Pago para validar `x-
 MERCADO_PAGO_WEBHOOK_SECRET="sua-chave-secreta-do-webhook"
 ```
 
+### `ASAAS_WEBHOOK_TOKEN`
+
+Opcional, mas recomendado. Token que voce configura no webhook do Asaas para validar as notificacoes recebidas.
+
+```env
+ASAAS_WEBHOOK_TOKEN="seu-token-webhook-asaas"
+```
+
+### `ASAAS_PLATFORM_API_KEY`
+
+Obrigatorio para criar subcontas Asaas e emitir as cobrancas pela sua conta/CNPJ principal.
+
+```env
+ASAAS_PLATFORM_API_KEY="$aact_YOUR_KEY"
+```
+
+### `ASAAS_PLATFORM_ENVIRONMENT`
+
+Ambiente da sua conta Asaas principal.
+
+```env
+ASAAS_PLATFORM_ENVIRONMENT="production"
+```
+
+### `ASAAS_DEFAULT_SPLIT_PERCENTUAL`
+
+Percentual liquido padrao repassado ao dono da rifa pela subconta Asaas criada no painel. A diferenca fica automaticamente na conta principal que emitiu a cobranca.
+
+```env
+ASAAS_DEFAULT_SPLIT_PERCENTUAL="90"
+```
+
+Com subcontas ativas, o painel tambem permite:
+
+- consultar saldo da subconta Asaas do dono da rifa;
+- solicitar saque via Pix para a chave Pix cadastrada no perfil;
+- registrar cada saque na tabela `saques`.
+
+Rotas protegidas:
+
+```text
+GET /api/v1/admin/gateways/asaas/saldo
+POST /api/v1/admin/gateways/asaas/saques
+```
+
+Webhook Asaas:
+
+```text
+https://rifa-production-eef0.up.railway.app/api/v1/webhooks/pagamento
+```
+
 ### `PAYMENT_WEBHOOK_ALLOWED_IPS`
 
 Opcional. Lista de IPs autorizados para chamar o webhook, separados por virgula. Se vazio, a seguranca fica baseada na assinatura do gateway.
 
 ```env
 PAYMENT_WEBHOOK_ALLOWED_IPS=""
+```
+
+### `WHATSAPP_API_URL`
+
+Opcional. Endpoint da instancia WhatsApp (Evolution API, Z-API ou similar) para disparos de remarketing.
+Se vazio, o sistema enfileira e simula os envios no log, sem chamar API externa.
+
+```env
+WHATSAPP_API_URL="https://sua-instancia-whatsapp.com/message/sendText"
+```
+
+### `WHATSAPP_API_TOKEN`
+
+Opcional. Token privado da instancia WhatsApp usado junto com `WHATSAPP_API_URL`.
+
+```env
+WHATSAPP_API_TOKEN="seu-token-da-instancia"
 ```
 
 ### `PUBLIC_APP_URL`
@@ -228,9 +331,14 @@ docker run --rm -p 3000:3000 --env-file .env rifa-headless
 - `POST /api/v1/webhooks/pagamento`
 - `POST /api/v1/admin/register`
 - `POST /api/v1/admin/login`
+- `GET /api/v1/admin/historico`
 - `POST /api/v1/admin/usuarios-clientes`
 - `GET /api/v1/admin/campanhas`
 - `POST /api/v1/admin/campanhas`
+- `GET /api/v1/admin/campanhas/:id/verificar-disparo`
+- `POST /api/v1/admin/campanhas/:id/disparar-whatsapp`
+- `GET /api/v1/admin/campanhas/:id/compradores-stats`
+- `PATCH /api/v1/admin/campanhas/:id/finalizar`
 - `PUT /api/v1/admin/campanhas/:id`
 - `DELETE /api/v1/admin/campanhas/:id`
 - `GET /api/v1/admin/rifinhas`

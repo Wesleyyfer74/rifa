@@ -18,6 +18,7 @@ enum CampanhaStatus {
   ativo
   pausado
   finalizado
+  sorteado
 }
 
 enum RifinhaStatus {
@@ -63,12 +64,54 @@ model Administrador {
   pixChave          String?  @map("pix_chave") @db.VarChar(180)
   pixTipo           String?  @map("pix_tipo") @db.VarChar(30)
   telefoneMensagens String?  @map("telefone_mensagens") @db.VarChar(30)
+  gatewayPreferido  String?  @map("gateway_preferido") @db.VarChar(30)
+  mercadoPagoUserId String?  @map("mercado_pago_user_id") @db.VarChar(80)
+  mercadoPagoAccessToken String? @map("mercado_pago_access_token") @db.Text
+  mercadoPagoRefreshToken String? @map("mercado_pago_refresh_token") @db.Text
+  mercadoPagoTokenExpiresAt DateTime? @map("mercado_pago_token_expires_at")
+  mercadoPagoConnectedAt DateTime? @map("mercado_pago_connected_at")
+  asaasApiKey       String?  @map("asaas_api_key") @db.Text
+  asaasEnvironment  String?  @map("asaas_environment") @db.VarChar(20)
+  asaasConnectedAt  DateTime? @map("asaas_connected_at")
+  asaasAccountId    String?  @map("asaas_account_id") @db.VarChar(120)
+  asaasWalletId     String?  @map("asaas_wallet_id") @db.VarChar(120)
+  asaasSplitPercentual Decimal? @map("asaas_split_percentual") @db.Decimal(5, 2)
+  documento         String?  @db.VarChar(20)
+  nascimento        DateTime?
+  faturamentoMensal Decimal? @map("faturamento_mensal") @db.Decimal(12, 2)
+  cep               String?  @db.VarChar(12)
+  endereco          String?  @db.VarChar(180)
+  enderecoNumero    String?  @map("endereco_numero") @db.VarChar(40)
+  bairro            String?  @db.VarChar(120)
+  complemento       String?  @db.VarChar(120)
+  tipoEmpresa       String?  @map("tipo_empresa") @db.VarChar(80)
+  termosUsoAceitoEm DateTime? @map("termos_uso_aceito_em")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   campanhas Campanha[]
+  saques    Saque[]
 
   @@map("administradores")
+}
+
+model Saque {
+  id              String   @id @default(uuid()) @db.Uuid
+  administradorId String   @map("admin_id") @db.Uuid
+  valor           Decimal  @db.Decimal(10, 2)
+  pixChave        String   @map("pix_chave") @db.VarChar(180)
+  pixTipo         String   @map("pix_tipo") @db.VarChar(30)
+  status          String   @default("pendente") @db.VarChar(40)
+  asaasTransferId String?  @map("asaas_transfer_id") @db.VarChar(120)
+  payload         Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  administrador Administrador @relation(fields: [administradorId], references: [id], onDelete: Cascade)
+
+  @@index([administradorId])
+  @@index([status])
+  @@map("saques")
 }
 
 model Campanha {

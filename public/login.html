@@ -37,6 +37,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     body { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .gold-scrollbar {
+      scrollbar-color: rgba(217, 154, 34, 0.85) rgba(245, 200, 97, 0.12);
+      scrollbar-width: thin;
+    }
+    .gold-scrollbar::-webkit-scrollbar { width: 10px; }
+    .gold-scrollbar::-webkit-scrollbar-track {
+      background: rgba(245, 200, 97, 0.10);
+      border-radius: 999px;
+    }
+    .gold-scrollbar::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #f5c861, #d99a22);
+      border: 2px solid #090805;
+      border-radius: 999px;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-panel-bg text-gold-50 antialiased">
@@ -95,9 +109,13 @@
 
           <div class="rounded-3xl border border-panel-line bg-panel-card shadow-dark">
             <div class="border-b border-panel-line p-6">
-              <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Login</p>
-              <h2 class="mt-1 text-2xl font-extrabold text-gold-50">Entrar no painel</h2>
-              <p class="mt-2 text-sm font-medium text-panel-muted">Use o login ou email cadastrado para acessar seus dados reais.</p>
+              <div class="inline-flex rounded-2xl border border-panel-line bg-black/35 p-1">
+                <button id="showLoginTab" class="h-10 rounded-xl bg-gold-500 px-4 text-xs font-extrabold text-black" type="button">Entrar</button>
+                <button id="showRegisterTab" class="h-10 rounded-xl px-4 text-xs font-extrabold text-panel-muted hover:text-gold-50" type="button">Criar conta</button>
+              </div>
+              <p id="authModeLabel" class="mt-5 text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Login</p>
+              <h2 id="authTitle" class="mt-1 text-2xl font-extrabold text-gold-50">Entrar no painel</h2>
+              <p id="authSubtitle" class="mt-2 text-sm font-medium text-panel-muted">Use o login ou email cadastrado para acessar seus dados reais.</p>
             </div>
 
             <form id="loginForm" class="grid gap-5 p-6">
@@ -108,18 +126,130 @@
 
               <label class="grid gap-2">
                 <span class="text-sm font-bold text-panel-muted">Senha</span>
-                <input name="password" required minlength="8" type="password" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Sua senha">
+                <input name="password" required minlength="6" type="password" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Sua senha">
               </label>
 
               <p id="loginError" class="hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-bold text-red-300"></p>
 
               <button id="loginButton" class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Entrar</button>
             </form>
+
+            <form id="registerForm" class="hidden grid gap-5 p-6">
+              <label class="grid gap-2">
+                <span class="text-sm font-bold text-panel-muted">Email</span>
+                <input name="email" required type="email" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="seu@email.com">
+              </label>
+
+              <label class="grid gap-2">
+                <span class="text-sm font-bold text-panel-muted">Senha</span>
+                <input name="password" required minlength="6" type="password" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Minimo 6 caracteres">
+              </label>
+
+              <div class="rounded-2xl border border-gold-500/30 bg-gold-500/10 p-4 text-sm font-semibold leading-6 text-panel-muted">
+                Depois de criar a conta, voce vai preencher os dados reais para ativar sua carteira de saque. Sem essa etapa, o painel nao libera criacao de rifas.
+              </div>
+
+              <p id="registerError" class="hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-bold text-red-300"></p>
+
+              <button id="registerButton" class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Criar conta e ativar carteira</button>
+            </form>
           </div>
         </div>
       </div>
     </section>
   </main>
+
+  <div id="walletModal" class="fixed inset-0 z-50 hidden items-center justify-center overflow-hidden bg-black/80 px-4 py-4 backdrop-blur-md">
+    <section class="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-panel-line bg-panel-card shadow-dark">
+      <div class="border-b border-panel-line p-5 sm:p-6">
+        <p class="text-xs font-extrabold uppercase tracking-[0.28em] text-gold-300">Carteira de saque</p>
+        <h2 class="mt-1 text-2xl font-black text-gold-50">Complete seu cadastro financeiro</h2>
+        <p class="mt-2 text-sm font-semibold leading-6 text-panel-muted">Esses dados serao usados para gerar sua carteira de recebimento na plataforma. Use CPF/CNPJ real e dados corretos para evitar bloqueio de saldo, falha em saque Pix ou problemas na validacao do pagamento.</p>
+      </div>
+
+      <form id="walletForm" class="gold-scrollbar grid gap-5 overflow-y-auto p-5 sm:p-6">
+        <div class="rounded-3xl border border-gold-500/25 bg-gold-500/10 p-4">
+          <strong class="block text-sm font-extrabold text-gold-50">Termos importantes</strong>
+          <p class="mt-2 text-sm font-semibold leading-6 text-panel-muted">Ao continuar, voce autoriza a plataforma a usar seus dados cadastrais para criar e manter sua carteira de recebimento, processar vendas Pix, consultar saldo, solicitar saques para a chave Pix informada por voce e cumprir validacoes antifraude e exigencias do gateway financeiro.</p>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="grid gap-2 sm:col-span-2">
+            <span class="text-sm font-bold text-panel-muted">Nome completo do dono da rifa</span>
+            <input name="nome" required minlength="3" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Nome igual ao CPF/CNPJ">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Email administrativo</span>
+            <input name="email" required type="email" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="seu@email.com">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">WhatsApp com DDD</span>
+            <input name="whatsapp" required inputmode="tel" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="65999999999">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">CPF ou CNPJ real</span>
+            <input name="cpf_cnpj" required inputmode="numeric" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Somente numeros">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Data de nascimento ou abertura</span>
+            <input name="birth_date" type="date" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">CEP</span>
+            <input name="postal_code" required inputmode="numeric" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Somente numeros">
+          </label>
+
+          <label class="grid gap-2 sm:col-span-2">
+            <span class="text-sm font-bold text-panel-muted">Rua / endereco</span>
+            <input name="address" required class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Endereco do titular">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Numero</span>
+            <input name="address_number" required class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: 95">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Bairro</span>
+            <input name="province" required class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Bairro">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Complemento</span>
+            <input name="complement" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Opcional">
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-panel-muted">Tipo da empresa, se CNPJ</span>
+            <select name="company_type" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+              <option value="">Pessoa fisica / CPF</option>
+              <option value="MEI">MEI</option>
+              <option value="LIMITED">Limitada</option>
+              <option value="INDIVIDUAL">Empresario individual</option>
+              <option value="ASSOCIATION">Associacao</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="flex items-start gap-3 rounded-2xl border border-panel-line bg-black/30 p-4">
+          <input name="aceite_termos" required type="checkbox" class="mt-1 h-5 w-5 rounded border-panel-line accent-gold-500">
+          <span class="text-sm font-semibold leading-6 text-panel-muted">Li e aceito os termos de uso. Confirmo que os dados informados sao verdadeiros e autorizo o uso desses dados para gerar minha carteira de saque, receber vendas Pix e processar saques dentro da plataforma.</span>
+        </label>
+
+        <p id="walletError" class="hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm font-bold text-red-300"></p>
+
+        <div class="sticky bottom-0 -mx-5 -mb-5 flex flex-col gap-3 border-t border-panel-line bg-panel-card/95 p-5 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <p class="text-xs font-bold leading-5 text-panel-muted">Sem ativar a carteira, o painel nao libera criacao de rifas nem recebimento por Pix.</p>
+          <button id="walletButton" class="h-12 rounded-2xl bg-gold-500 px-6 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Ativar carteira e entrar</button>
+        </div>
+      </form>
+    </section>
+  </div>
 
   <script src="/login.js"></script>
 </body>

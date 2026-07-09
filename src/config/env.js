@@ -57,10 +57,8 @@ function validateRuntimeEnv() {
   if (process.env.NODE_ENV === 'production') {
     validateDatabaseUrl();
 
-    if ((process.env.PAYMENT_PROVIDER || 'manual') === 'mercado_pago') {
-      requireEnv('MERCADO_PAGO_ACCESS_TOKEN');
-      requireEnv('MERCADO_PAGO_WEBHOOK_SECRET');
-    }
+    // Gateways sao conectados por administrador no painel.
+    // As credenciais especificas sao validadas apenas quando o admin tenta conectar/usar o gateway.
   }
 }
 
@@ -75,6 +73,13 @@ const env = {
   paymentProvider: process.env.PAYMENT_PROVIDER || 'manual',
   mercadoPagoAccessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN,
   mercadoPagoWebhookSecret: process.env.MERCADO_PAGO_WEBHOOK_SECRET,
+  mercadoPagoClientId: process.env.MERCADO_PAGO_CLIENT_ID,
+  mercadoPagoClientSecret: process.env.MERCADO_PAGO_CLIENT_SECRET,
+  mercadoPagoRedirectUri: process.env.MERCADO_PAGO_REDIRECT_URI,
+  asaasWebhookToken: process.env.ASAAS_WEBHOOK_TOKEN,
+  asaasPlatformApiKey: process.env.ASAAS_PLATFORM_API_KEY || process.env.ASAAS_API_KEY,
+  asaasPlatformEnvironment: process.env.ASAAS_PLATFORM_ENVIRONMENT || process.env.ASAAS_ENVIRONMENT || 'production',
+  asaasDefaultSplitPercentual: process.env.ASAAS_DEFAULT_SPLIT_PERCENTUAL || '90',
   paymentWebhookAllowedIps: parseAllowedOrigins(process.env.PAYMENT_WEBHOOK_ALLOWED_IPS),
 };
 

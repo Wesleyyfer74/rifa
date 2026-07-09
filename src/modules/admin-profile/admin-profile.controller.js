@@ -1,5 +1,7 @@
 const prisma = require('../../database/prisma');
 const profileRepository = require('./admin-profile.repository');
+const asaasService = require('../payments/asaas.service');
+const mercadoPagoOAuth = require('../payments/mercado-pago-oauth.service');
 const { HttpError } = require('../../utils/http-error');
 
 function cleanString(value) {
@@ -20,6 +22,21 @@ function serializeProfile(admin) {
     pix_chave: admin.pixChave,
     pix_tipo: admin.pixTipo,
     telefone_mensagens: admin.telefoneMensagens,
+    gateway_preferido: admin.gatewayPreferido,
+    carteira: {
+      documento: admin.documento,
+      nascimento: admin.nascimento,
+      faturamento_mensal: admin.faturamentoMensal,
+      cep: admin.cep,
+      endereco: admin.endereco,
+      endereco_numero: admin.enderecoNumero,
+      bairro: admin.bairro,
+      complemento: admin.complemento,
+      tipo_empresa: admin.tipoEmpresa,
+      termos_uso_aceito_em: admin.termosUsoAceitoEm,
+    },
+    mercado_pago: mercadoPagoOAuth.getConnectionStatus(admin),
+    asaas: asaasService.getConnectionStatus(admin),
   };
 }
 

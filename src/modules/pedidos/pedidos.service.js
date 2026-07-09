@@ -8,6 +8,7 @@ const { HttpError } = require('../../utils/http-error');
 
 const DEFAULT_RESERVA_EXPIRA_EM_MINUTOS = 15;
 const MAX_TRANSACTION_RETRIES = 3;
+const MIN_ORDER_VALUE = 5;
 
 function normalizeNumbers(values) {
   return [...new Set(values.map(Number))].sort((a, b) => a - b);
@@ -19,11 +20,14 @@ function formatChancePercent(cotasCount, totalCotas) {
 
 function getCampaignQuotaRules(campanha) {
   const metadata = campanha.metadata && typeof campanha.metadata === 'object' ? campanha.metadata : {};
+  const valorCota = Number(campanha.valorCota || 0);
+  const minByAmount = valorCota > 0 ? Math.ceil(MIN_ORDER_VALUE / valorCota) : 1;
 
   return {
     reservaExpiraMinutos: Number(metadata.reserva_expira_minutos || DEFAULT_RESERVA_EXPIRA_EM_MINUTOS),
-    minCotasPorPedido: Number(metadata.min_cotas_por_pedido || 1),
+    minCotasPorPedido: Math.max(Number(metadata.min_cotas_por_pedido || 1), minByAmount),
     maxCotasPorPedido: Number(metadata.max_cotas_por_pedido || 100),
+    minValorPedido: MIN_ORDER_VALUE,
   };
 }
 
@@ -117,17 +121,17 @@ async function reservePendingOrder(input) {
 
     await cotasRepository.ensureCotas(campanha, tx);
 
-    let numeros = input.numeros;
-
-    if (input.quantidade) {
-      const occupiedNumbers = await cotasRepository.listOccupiedNumbers(campanha.id, tx);
-
-      numeros = sampleRandomAvailableNumbers({
-        totalCotas: campanha.totalCotas,
-        occupiedNumbers,
-        quantidade: input.quantidade,
-      });
+    if (!input.quantidade) {
+      throw new HttpError(422, 'quantidade_cotas e obrigatoria.');
     }
+
+    const occupiedNumbers = await cotasRepository.listOccupiedNumbers(campanha.id, tx);
+
+    let numeros = sampleRandomAvailableNumbers({
+      totalCotas: campanha.totalCotas,
+      occupiedNumbers,
+      quantidade: input.quantidade,
+    });
 
     numeros = normalizeNumbers(numeros);
 
@@ -146,6 +150,11 @@ async function reservePendingOrder(input) {
     }
 
     const valorTotal = Number(campanha.valorCota) * numeros.length;
+
+    if (valorTotal < rules.minValorPedido) {
+      throw new HttpError(422, `Compra minima de R$ ${rules.minValorPedido.toFixed(2).replace('.', ',')}.`);
+    }
+
     const expiresAt = new Date(Date.now() + rules.reservaExpiraMinutos * 60 * 1000);
 
     const pedido = await tx.pedido.create({
@@ -168,13 +177,9 @@ async function reservePendingOrder(input) {
     }, tx);
 
     if (reserved.count !== numeros.length) {
-      if (input.quantidade) {
-        const retryError = new Error('Concorrencia detectada ao reservar cotas automaticas.');
-        retryError.code = 'RESERVA_RETRY';
-        throw retryError;
-      }
-
-      throw new HttpError(400, 'Uma ou mais cotas ja estao reservadas ou pagas.');
+      const retryError = new Error('Concorrencia detectada ao reservar cotas automaticas.');
+      retryError.code = 'RESERVA_RETRY';
+      throw retryError;
     }
 
     const reservedPedido = await pedidosRepository.findById(pedido.id, tx);
@@ -187,7 +192,47 @@ async function reservePendingOrder(input) {
   });
 }
 
+async function cancelPendingOrder(pedidoId, reason = 'Falha ao gerar PIX') {
+  return prisma.$transaction(async (tx) => {
+    const pedido = await tx.pedido.findUnique({
+      where: { id: pedidoId },
+      select: {
+        id: true,
+        statusPagamento: true,
+      },
+    });
+
+    if (!pedido || pedido.statusPagamento !== 'pendente') {
+      return pedido;
+    }
+
+    await tx.cotaCampanha.updateMany({
+      where: {
+        pedidoId,
+        status: 'reservado',
+      },
+      data: {
+        status: 'disponivel',
+        pedidoId: null,
+        reservedAt: null,
+      },
+    });
+
+    return tx.pedido.update({
+      where: { id: pedidoId },
+      data: {
+        statusPagamento: 'cancelado',
+        gatewayPayload: {
+          cancel_reason: reason,
+          canceled_at: new Date().toISOString(),
+        },
+      },
+    });
+  });
+}
+
 module.exports = {
+  cancelPendingOrder,
   formatChancePercent,
   reservePendingOrder,
   sampleRandomAvailableNumbers,

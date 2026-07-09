@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const authRepository = require('./auth.repository');
+const asaasService = require('../payments/asaas.service');
+const mercadoPagoOAuth = require('../payments/mercado-pago-oauth.service');
 const { env } = require('../../config/env');
 const { HttpError } = require('../../utils/http-error');
 
@@ -15,6 +17,9 @@ function sanitizeAdmin(admin) {
     pix_chave: admin.pixChave,
     pix_tipo: admin.pixTipo,
     telefone_mensagens: admin.telefoneMensagens,
+    gateway_preferido: admin.gatewayPreferido,
+    mercado_pago: mercadoPagoOAuth.getConnectionStatus(admin),
+    asaas: asaasService.getConnectionStatus(admin),
   };
 }
 
@@ -35,18 +40,32 @@ function signToken(admin) {
   );
 }
 
+function buildDefaultName(email) {
+  const prefix = String(email || '').split('@')[0] || 'Dono da rifa';
+  return prefix
+    .replace(/[._-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase()) || 'Dono da rifa';
+}
+
 async function register(req, res, next) {
   try {
     const { nome, email, password, senha, whatsapp } = req.body;
     const plainPassword = password || senha;
     const normalizedEmail = String(email || '').trim().toLowerCase();
+    const adminName = String(nome || '').trim() || buildDefaultName(normalizedEmail);
 
-    if (!nome || !normalizedEmail || !plainPassword) {
-      throw new HttpError(422, 'nome, email e password sao obrigatorios.');
+    if (!normalizedEmail || !plainPassword) {
+      throw new HttpError(422, 'email e password sao obrigatorios.');
     }
 
-    if (plainPassword.length < 8) {
-      throw new HttpError(422, 'A senha precisa ter pelo menos 8 caracteres.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      throw new HttpError(422, 'Email invalido.');
+    }
+
+    if (plainPassword.length < 6) {
+      throw new HttpError(422, 'A senha precisa ter pelo menos 6 caracteres.');
     }
 
     const existingAdmin = await authRepository.findAdministradorByEmail(normalizedEmail);
@@ -57,7 +76,7 @@ async function register(req, res, next) {
 
     const passwordHash = await bcrypt.hash(plainPassword, 12);
     const admin = await authRepository.createAdministrador({
-      nome,
+      nome: adminName,
       email: normalizedEmail,
       password: passwordHash,
       whatsapp,

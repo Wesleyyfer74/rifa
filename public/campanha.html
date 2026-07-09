@@ -15,7 +15,6 @@
     <nav>
       <a href="#comprar">Comprar cotas</a>
       <a href="#regulamento">Regulamento</a>
-      <a href="#contato">Contato</a>
     </nav>
   </header>
 
@@ -75,28 +74,23 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">Escolha suas cotas</p>
-              <h2>Selecione numeros ou compre no modo aleatorio</h2>
+              <h2>Informe quantas cotas deseja comprar</h2>
             </div>
             <span id="quotaRules"></span>
           </div>
 
-          <div class="mode-tabs" role="tablist">
-            <button id="randomModeButton" class="active" type="button">Cotas aleatorias</button>
-            <button id="manualModeButton" type="button">Escolher numeros</button>
-          </div>
+          <div class="mode-card">
+            <div class="quota-stepper" aria-label="Selecionar quantidade de cotas">
+              <button id="decreaseQuota" class="quota-stepper-button" type="button" aria-label="Diminuir cotas">-</button>
+              <output id="quotaDisplay" class="quota-display" for="randomQuantity">1</output>
+              <button id="increaseQuota" class="quota-stepper-button" type="button" aria-label="Aumentar cotas">+</button>
+            </div>
 
-          <div id="randomMode" class="mode-card">
-            <label>
-              <span>Quantidade de cotas</span>
+            <label class="quota-input-label">
+              <span>Ou digite a quantidade exata</span>
               <input id="randomQuantity" min="1" step="1" type="number" value="1">
             </label>
             <div class="quick-amounts" id="quickAmounts"></div>
-          </div>
-
-          <div id="manualMode" class="mode-card hidden">
-            <p id="manualHint">Digite numeros separados por virgula. Para rifas pequenas, voce tambem pode clicar na grade abaixo.</p>
-            <textarea id="manualNumbers" rows="3" placeholder="Ex: 12, 45, 108"></textarea>
-            <div id="numbersGrid" class="numbers-grid"></div>
           </div>
         </div>
 
@@ -142,10 +136,6 @@
         <article>
           <h2>Pagamento</h2>
           <p id="paymentInstructions"></p>
-        </article>
-        <article id="contato">
-          <h2>Contato</h2>
-          <p id="supportContact"></p>
         </article>
       </section>
     </section>
