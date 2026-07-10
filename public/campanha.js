@@ -269,7 +269,7 @@ function buildPaymentResult(data) {
       Quantidade de cotas: ${Number(data.quantidade_cotas || 0).toLocaleString('pt-BR')}<br>
       Total: ${formatMoney(data.valor_total)}<br>
       Chance: ${escapeHtml(data.chance_percentual_label)}<br>
-      <span class="payment-warning">Gateway PIX ainda nao configurado. Ative o Mercado Pago para gerar QR Code automaticamente.</span>
+      <span class="payment-warning">Pix ainda nao configurado. Ative a carteira Asaas no perfil do rifeiro para gerar QR Code automaticamente.</span>
     `;
   }
 

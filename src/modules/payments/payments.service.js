@@ -58,7 +58,7 @@ async function createPixByAdminGateway(pedido) {
   const hasAsaasSplit = Boolean(admin?.asaasWalletId && asaasService.isPlatformConfigured());
 
   if (!admin?.mercadoPagoAccessToken && !hasAsaasSplit && !hasAsaasDirect) {
-    throw new HttpError(409, 'Conecte Mercado Pago ou Asaas no perfil do dono da rifa antes de vender.');
+    throw new HttpError(409, 'Ative a carteira Asaas no perfil do dono da rifa antes de vender.');
   }
 
   if (admin.gatewayPreferido === 'asaas_proprio' && hasAsaasDirect) {
@@ -81,7 +81,7 @@ async function createPixByAdminGateway(pedido) {
     return asaasProvider.createPixPayment(pedido, credentials);
   }
 
-  throw new HttpError(409, 'Crie a subconta Asaas do dono da rifa antes de vender.');
+  throw new HttpError(409, 'Ative a carteira Asaas do dono da rifa antes de vender.');
 }
 
 async function markPedidoAsPaid({ gatewayPaymentId, gatewayPayload }) {

@@ -381,7 +381,7 @@ async function getAdminCredentials(adminId) {
   }
 
   if (!admin?.asaasWalletId) {
-    throw new HttpError(409, 'Crie a subconta Asaas do dono da rifa antes de vender.');
+    throw new HttpError(409, 'Ative a carteira Asaas do dono da rifa antes de vender.');
   }
 
   return {

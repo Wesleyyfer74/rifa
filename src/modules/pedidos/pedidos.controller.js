@@ -2,7 +2,6 @@ const campanhasRepository = require('../campanhas/campanhas.repository');
 const pedidosRepository = require('./pedidos.repository');
 const pedidosService = require('./pedidos.service');
 const paymentsService = require('../payments/payments.service');
-const { env } = require('../../config/env');
 const { HttpError } = require('../../utils/http-error');
 const {
   reservarPedidoBody,
@@ -26,7 +25,7 @@ async function reservar(req, res, next) {
 
     const freeCampaign = pedidosService.isFreeCampaign(pedido.campanha);
 
-    if (!freeCampaign && env.paymentProvider === 'mercado_pago') {
+    if (!freeCampaign) {
       try {
         pedido = await paymentsService.generatePixForPedido(pedido);
       } catch (error) {
@@ -51,7 +50,7 @@ async function reservar(req, res, next) {
         pix_qr_code: pedido.pixQrCode,
         gateway_provider: pedido.gatewayProvider,
         gateway_payment_id: pedido.gatewayPaymentId,
-        pix_gateway_configurado: !freeCampaign && env.paymentProvider === 'mercado_pago',
+        pix_gateway_configurado: !freeCampaign && Boolean(pedido.pixCopiaCola && pedido.pixQrCode),
         expires_at: pedido.expiresAt,
         paid_at: pedido.paidAt,
       },
