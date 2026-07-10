@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Rifa | Plataforma para vender rifas online</title>
+  <meta name="description" content="Crie rifas online, venda cotas por Pix e acompanhe compradores em um painel premium.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Space Rifa">
+      <span class="brand-mark">SR</span>
+      <span>
+        <strong>Space Rifa</strong>
+        <small>rifas online com Pix</small>
+      </span>
+    </a>
+
+    <nav class="desktop-nav" aria-label="Navegacao principal">
+      <a href="#rifas">Rifas agora</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#suporte">Suporte</a>
+    </nav>
+
+    <a class="owner-link" href="/login">Area do rifeiro</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">plataforma premium para rifas</p>
+        <h1>Crie sua rifa, compartilhe o link e venda cotas com visual profissional.</h1>
+        <p class="hero-text">A Space Rifa gera paginas de venda para campanhas, organiza compradores, acompanha cotas e prepara o fluxo de Pix para quem quer vender com mais controle.</p>
+
+        <div class="hero-actions">
+          <a class="primary-button" href="/login">Entrar como rifeiro</a>
+          <a class="ghost-button" href="#rifas">Ver rifas ativas</a>
+        </div>
+
+        <dl class="hero-stats" aria-label="Resumo da plataforma">
+          <div>
+            <dt>R$ 5</dt>
+            <dd>compra minima</dd>
+          </div>
+          <div>
+            <dt>Pix</dt>
+            <dd>feito para checkout rapido</dd>
+          </div>
+          <div>
+            <dt>24h</dt>
+            <dd>painel sempre online</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="hero-panel" aria-label="Previa do painel de rifas">
+        <div class="panel-top">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="raffle-preview">
+          <p>Campanha ativa</p>
+          <h2>Rifa Premiada</h2>
+          <div class="quota-control">
+            <button type="button">-</button>
+            <strong>50 cotas</strong>
+            <button type="button">+</button>
+          </div>
+          <div class="preview-grid" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="preview-total">
+            <small>Total reservado</small>
+            <strong>R$ 25,00</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="rifas" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">rifas agora</p>
+        <h2>Campanhas disponiveis para comprar cotas</h2>
+        <p>Veja as campanhas publicas que ja estao recebendo participantes.</p>
+      </div>
+
+      <div class="carousel-shell">
+        <button class="carousel-button" type="button" data-carousel-prev aria-label="Rifas anteriores">‹</button>
+        <div id="raffleCarousel" class="raffle-carousel" aria-live="polite">
+          <article class="loading-card">Carregando rifas ativas...</article>
+        </div>
+        <button class="carousel-button" type="button" data-carousel-next aria-label="Proximas rifas">›</button>
+      </div>
+    </section>
+
+    <section id="como-funciona" class="section steps-section">
+      <div class="section-heading">
+        <p class="eyebrow">como funciona</p>
+        <h2>Da criacao da rifa ao link de venda</h2>
+      </div>
+
+      <div class="steps-grid">
+        <article>
+          <span>01</span>
+          <h3>Cadastre sua conta</h3>
+          <p>O rifeiro entra no painel, completa os dados obrigatorios e libera a carteira de recebimento.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Crie a campanha</h3>
+          <p>Defina premio, imagem, valor da cota, limites de compra, regras e data do sorteio.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Compartilhe o link</h3>
+          <p>A pagina de venda fica pronta para o comprador escolher pacotes de cotas e finalizar pelo Pix.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="cta-section">
+      <div>
+        <p class="eyebrow">venha fazer a sua rifa</p>
+        <h2>Transforme sua campanha em uma pagina bonita, simples e pronta para vender.</h2>
+      </div>
+      <a class="primary-button" href="/login">Comecar agora</a>
+    </section>
+  </main>
+
+  <footer id="suporte" class="site-footer">
+    <div>
+      <strong>Space Rifa</strong>
+      <p>Atendimento e suporte para rifeiros.</p>
+    </div>
+    <a href="mailto:suporte@spacerd.com.br">suporte@spacerd.com.br</a>
+  </footer>
+
+  <script src="/index.js"></script>
+</body>
+</html>
