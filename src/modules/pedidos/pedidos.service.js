@@ -10,6 +10,14 @@ const DEFAULT_RESERVA_EXPIRA_EM_MINUTOS = 15;
 const MAX_TRANSACTION_RETRIES = 3;
 const MIN_ORDER_VALUE = 5;
 
+function isFreeCampaign(campanha) {
+  const metadata = campanha?.metadata && typeof campanha.metadata === 'object' ? campanha.metadata : {};
+  return metadata.tipo_campanha === 'gratuita'
+    || metadata.tipo_campanha === 'gratis'
+    || metadata.sem_fins_lucrativos === true
+    || Number(campanha?.valorCota || 0) === 0;
+}
+
 function normalizeNumbers(values) {
   return [...new Set(values.map(Number))].sort((a, b) => a - b);
 }
@@ -21,13 +29,14 @@ function formatChancePercent(cotasCount, totalCotas) {
 function getCampaignQuotaRules(campanha) {
   const metadata = campanha.metadata && typeof campanha.metadata === 'object' ? campanha.metadata : {};
   const valorCota = Number(campanha.valorCota || 0);
-  const minByAmount = valorCota > 0 ? Math.ceil(MIN_ORDER_VALUE / valorCota) : 1;
+  const freeCampaign = isFreeCampaign(campanha);
+  const minByAmount = !freeCampaign && valorCota > 0 ? Math.ceil(MIN_ORDER_VALUE / valorCota) : 1;
 
   return {
     reservaExpiraMinutos: Number(metadata.reserva_expira_minutos || DEFAULT_RESERVA_EXPIRA_EM_MINUTOS),
     minCotasPorPedido: Math.max(Number(metadata.min_cotas_por_pedido || 1), minByAmount),
     maxCotasPorPedido: Number(metadata.max_cotas_por_pedido || 100),
-    minValorPedido: MIN_ORDER_VALUE,
+    minValorPedido: freeCampaign ? 0 : MIN_ORDER_VALUE,
   };
 }
 
@@ -81,6 +90,34 @@ function isRetryablePrismaConflict(error) {
     || error.message?.toLowerCase().includes('write conflict');
 }
 
+async function ensureFreeCampaignSingleEntry({ campanhaId, whatsapp }, client) {
+  const phoneDigits = String(whatsapp || '').replace(/\D/g, '');
+
+  if (!phoneDigits) {
+    throw new HttpError(422, 'WhatsApp invalido.');
+  }
+
+  const existing = await client.pedido.findMany({
+    where: {
+      campanhaId,
+      statusPagamento: {
+        in: ['pendente', 'pago'],
+      },
+    },
+    select: {
+      compradorWhatsapp: true,
+    },
+  });
+
+  const alreadyJoined = existing.some((pedido) => (
+    String(pedido.compradorWhatsapp || '').replace(/\D/g, '') === phoneDigits
+  ));
+
+  if (alreadyJoined) {
+    throw new HttpError(409, 'Este WhatsApp ja possui uma cota nesta campanha gratuita.');
+  }
+}
+
 async function runSerializableWithRetry(callback) {
   let lastError;
 
@@ -118,6 +155,7 @@ async function reservePendingOrder(input) {
     }
 
     const rules = getCampaignQuotaRules(campanha);
+    const freeCampaign = isFreeCampaign(campanha);
 
     await cotasRepository.ensureCotas(campanha, tx);
 
@@ -126,6 +164,13 @@ async function reservePendingOrder(input) {
     }
 
     const occupiedNumbers = await cotasRepository.listOccupiedNumbers(campanha.id, tx);
+
+    if (freeCampaign) {
+      await ensureFreeCampaignSingleEntry({
+        campanhaId: campanha.id,
+        whatsapp: input.compradorWhatsapp,
+      }, tx);
+    }
 
     let numeros = sampleRandomAvailableNumbers({
       totalCotas: campanha.totalCotas,
@@ -155,7 +200,8 @@ async function reservePendingOrder(input) {
       throw new HttpError(422, `Compra minima de R$ ${rules.minValorPedido.toFixed(2).replace('.', ',')}.`);
     }
 
-    const expiresAt = new Date(Date.now() + rules.reservaExpiraMinutos * 60 * 1000);
+    const expiresAt = freeCampaign ? null : new Date(Date.now() + rules.reservaExpiraMinutos * 60 * 1000);
+    const now = new Date();
 
     const pedido = await tx.pedido.create({
       data: {
@@ -164,9 +210,15 @@ async function reservePendingOrder(input) {
         compradorWhatsapp: input.compradorWhatsapp,
         compradorEmail: input.compradorEmail,
         cotasReservadas: numeros,
-        statusPagamento: 'pendente',
+        statusPagamento: freeCampaign ? 'pago' : 'pendente',
         valorTotal,
         expiresAt,
+        paidAt: freeCampaign ? now : null,
+        gatewayProvider: freeCampaign ? 'gratuito' : null,
+        gatewayPayload: freeCampaign ? {
+          tipo: 'campanha_gratuita',
+          confirmado_em: now.toISOString(),
+        } : undefined,
       },
     });
 
@@ -180,6 +232,19 @@ async function reservePendingOrder(input) {
       const retryError = new Error('Concorrencia detectada ao reservar cotas automaticas.');
       retryError.code = 'RESERVA_RETRY';
       throw retryError;
+    }
+
+    if (freeCampaign) {
+      await tx.cotaCampanha.updateMany({
+        where: {
+          pedidoId: pedido.id,
+          status: 'reservado',
+        },
+        data: {
+          status: 'pago',
+          paidAt: now,
+        },
+      });
     }
 
     const reservedPedido = await pedidosRepository.findById(pedido.id, tx);
@@ -234,6 +299,7 @@ async function cancelPendingOrder(pedidoId, reason = 'Falha ao gerar PIX') {
 module.exports = {
   cancelPendingOrder,
   formatChancePercent,
+  isFreeCampaign,
   reservePendingOrder,
   sampleRandomAvailableNumbers,
 };

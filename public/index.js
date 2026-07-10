@@ -41,6 +41,8 @@ function renderCampaignCard(campaign) {
   const imageUrl = getField(campaign, 'imagem_url', 'imagemUrl');
   const value = getField(campaign, 'valor_cota', 'valorCota');
   const total = getField(campaign, 'total_cotas', 'totalCotas');
+  const metadata = campaign?.metadata && typeof campaign.metadata === 'object' ? campaign.metadata : {};
+  const free = metadata.tipo_campanha === 'gratuita' || metadata.sem_fins_lucrativos === true || Number(value || 0) === 0;
   const description = getField(campaign, 'descricao', 'descricao') || 'Participe comprando pacotes de cotas e acompanhe sua reserva pelo checkout.';
 
   return `
@@ -50,10 +52,10 @@ function renderCampaignCard(campaign) {
         <h3>${escapeHtml(title)}</h3>
         <p>${escapeHtml(description).slice(0, 120)}</p>
         <div class="raffle-meta">
-          <span>Valor da cota<strong>${formatMoney(value)}</strong></span>
+          <span>Valor da cota<strong>${free ? 'Gratis' : formatMoney(value)}</strong></span>
           <span>Total de cotas<strong>${Number(total || 0).toLocaleString('pt-BR')}</strong></span>
         </div>
-        <a class="primary-button" href="/rifa/${encodeURIComponent(slug)}">Comprar cotas</a>
+        <a class="primary-button" href="/rifa/${encodeURIComponent(slug)}">${free ? 'Participar gratis' : 'Comprar cotas'}</a>
       </div>
     </article>
   `;

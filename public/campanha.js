@@ -61,17 +61,26 @@ function getMetadata() {
     : {};
 }
 
+function isFreeCampaign() {
+  const metadata = getMetadata();
+  return metadata.tipo_campanha === 'gratuita'
+    || metadata.tipo_campanha === 'gratis'
+    || metadata.sem_fins_lucrativos === true
+    || Number(state.campaign?.valor_cota || 0) === 0;
+}
+
 function getRules() {
   const metadata = getMetadata();
   const total = Number(state.campaign?.total_cotas || 1);
   const quotaValue = Number(state.campaign?.valor_cota || 0);
-  const minByAmount = quotaValue > 0 ? Math.ceil(MIN_ORDER_VALUE / quotaValue) : 1;
+  const free = isFreeCampaign();
+  const minByAmount = !free && quotaValue > 0 ? Math.ceil(MIN_ORDER_VALUE / quotaValue) : 1;
 
   return {
     min: Math.max(Number(metadata.min_cotas_por_pedido || 1), minByAmount),
     max: Math.min(Number(metadata.max_cotas_por_pedido || 100), total),
     expires: Number(metadata.reserva_expira_minutos || 15),
-    minValue: MIN_ORDER_VALUE,
+    minValue: free ? 0 : MIN_ORDER_VALUE,
   };
 }
 
@@ -143,6 +152,7 @@ function renderCampaign(campaign) {
   const metadata = campaign.metadata || {};
   const rules = getRules();
   const resumo = campaign.resumo_cotas || {};
+  const free = isFreeCampaign();
 
   document.title = `${campaign.titulo} | Rifa Premium`;
   els.image.src = campaign.imagem_url || '/hero-raffle.png';
@@ -150,16 +160,27 @@ function renderCampaign(campaign) {
   els.status.textContent = campaign.status;
   els.title.textContent = campaign.titulo;
   els.prize.textContent = metadata.premio_principal || 'Premio especial';
-  els.description.textContent = campaign.descricao || 'Escolha suas cotas e participe desta campanha.';
-  els.price.textContent = formatMoney(campaign.valor_cota);
+  els.description.textContent = campaign.descricao || (free
+    ? 'Adquira sua cota gratuita e participe deste sorteio sem fins lucrativos.'
+    : 'Escolha suas cotas e participe desta campanha.');
+  els.price.textContent = free ? 'Gratis' : formatMoney(campaign.valor_cota);
   els.total.textContent = Number(campaign.total_cotas || 0).toLocaleString('pt-BR');
   els.available.textContent = Number(resumo.disponiveis || 0).toLocaleString('pt-BR');
-  els.rules.textContent = `${rules.min} a ${rules.max} cotas por pedido | minimo ${formatMoney(rules.minValue)} | reserva ${rules.expires} min`;
+  els.rules.textContent = free
+    ? `${rules.min} a ${rules.max} cotas por participacao | sem pagamento`
+    : `${rules.min} a ${rules.max} cotas por pedido | minimo ${formatMoney(rules.minValue)} | reserva ${rules.expires} min`;
   els.randomQuantity.min = String(rules.min);
   els.randomQuantity.max = String(rules.max);
   setQuantity(rules.min);
   els.campaignRules.textContent = campaign.regulamento || 'Regulamento nao informado.';
-  els.paymentInstructions.textContent = metadata.instrucoes_pagamento || `Reserve suas cotas e pague dentro de ${rules.expires} minutos para confirmar.`;
+  els.paymentInstructions.textContent = metadata.instrucoes_pagamento || (free
+    ? 'Sorteio gratuito e sem fins lucrativos. Suas cotas sao confirmadas ao enviar seus dados.'
+    : `Reserve suas cotas e pague dentro de ${rules.expires} minutos para confirmar.`);
+
+  document.querySelector('.hero-actions .btn-gold').textContent = free ? 'Participar agora' : 'Comprar agora';
+  document.querySelector('.checkout-card h2').textContent = free ? 'Confirmar participacao' : 'Finalizar reserva';
+  document.querySelector('#orderForm button[type="submit"]').textContent = free ? 'Garantir cota gratis' : 'Reservar cotas';
+  document.querySelector('#regulamento article:last-child h2').textContent = free ? 'Participacao gratuita' : 'Pagamento';
 
   buildQuickAmounts();
   showPage();
@@ -183,7 +204,7 @@ async function loadSalesTicker(slug) {
     const items = Array.isArray(payload.data) ? payload.data : [];
     els.tickerText.textContent = items.length
       ? buildTickerText(items)
-      : 'Aguardando primeiras compras confirmadas...';
+      : (isFreeCampaign() ? 'Aguardando primeiras participacoes confirmadas...' : 'Aguardando primeiras compras confirmadas...');
   } catch (error) {
     els.tickerText.textContent = 'Compras recentes serao exibidas em instantes.';
   }
@@ -192,13 +213,16 @@ async function loadSalesTicker(slug) {
 function validateOrderPayload(payload) {
   const rules = getRules();
   const quantity = payload.quantidade_cotas || 0;
+  const free = isFreeCampaign();
 
   if (quantity < rules.min || quantity > rules.max) {
-    throw new Error(`Escolha entre ${rules.min} e ${rules.max} cota(s). Compra minima de ${formatMoney(rules.minValue)}.`);
+    throw new Error(free
+      ? `Escolha entre ${rules.min} e ${rules.max} cota(s).`
+      : `Escolha entre ${rules.min} e ${rules.max} cota(s). Compra minima de ${formatMoney(rules.minValue)}.`);
   }
 
   const total = Number(state.campaign?.valor_cota || 0) * quantity;
-  if (total < rules.minValue) {
+  if (!free && total < rules.minValue) {
     throw new Error(`A compra minima e de ${formatMoney(rules.minValue)}.`);
   }
 }
@@ -222,6 +246,16 @@ async function copyPixPayload(payload, button) {
 }
 
 function buildPaymentResult(data) {
+  if (data.tipo_campanha === 'gratuita' || Number(data.valor_total || 0) === 0) {
+    return `
+      <strong>Participacao confirmada com sucesso.</strong><br>
+      Pedido: ${escapeHtml(data.id)}<br>
+      Cotas garantidas: ${Number(data.quantidade_cotas || 0).toLocaleString('pt-BR')}<br>
+      Chance: ${escapeHtml(data.chance_percentual_label)}<br>
+      <span class="payment-warning">Sorteio gratuito e sem fins lucrativos. Nenhum pagamento e necessario.</span>
+    `;
+  }
+
   const pixPayload = data.pix_copia_cola || '';
   const qrCode = data.pix_qr_code || '';
   const qrCodeSrc = qrCode.startsWith('data:')

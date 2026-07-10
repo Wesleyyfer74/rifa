@@ -6,3 +6,4 @@ npm-debug.log*
 prisma/*.db
 *.log
 public/uploads/
+production-clean-backup-*.json

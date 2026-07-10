@@ -24,7 +24,9 @@ async function reservar(req, res, next) {
     const chancePercentual = pedido.chancePercentual;
     const chancePercentualLabel = pedido.chancePercentualLabel;
 
-    if (env.paymentProvider === 'mercado_pago') {
+    const freeCampaign = pedidosService.isFreeCampaign(pedido.campanha);
+
+    if (!freeCampaign && env.paymentProvider === 'mercado_pago') {
       try {
         pedido = await paymentsService.generatePixForPedido(pedido);
       } catch (error) {
@@ -35,10 +37,11 @@ async function reservar(req, res, next) {
 
     return res.status(201).json({
       success: true,
-      message: 'Reserva criada com sucesso.',
+      message: freeCampaign ? 'Participacao confirmada com sucesso.' : 'Reserva criada com sucesso.',
       data: {
         id: pedido.id,
         campanha_id: pedido.campanhaId,
+        tipo_campanha: freeCampaign ? 'gratuita' : 'paga',
         status_pagamento: pedido.statusPagamento,
         quantidade_cotas: pedido.cotasReservadas.length,
         chance_percentual: chancePercentual,
@@ -48,8 +51,9 @@ async function reservar(req, res, next) {
         pix_qr_code: pedido.pixQrCode,
         gateway_provider: pedido.gatewayProvider,
         gateway_payment_id: pedido.gatewayPaymentId,
-        pix_gateway_configurado: env.paymentProvider === 'mercado_pago',
+        pix_gateway_configurado: !freeCampaign && env.paymentProvider === 'mercado_pago',
         expires_at: pedido.expiresAt,
+        paid_at: pedido.paidAt,
       },
     });
   } catch (error) {

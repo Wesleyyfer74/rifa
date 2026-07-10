@@ -386,6 +386,7 @@ async function create(req, res, next) {
       imagem_url,
       dataSorteio,
       data_sorteio,
+      tipo_campanha,
       metadata = {},
       rifinhas = [],
     } = req.body;
@@ -397,17 +398,23 @@ async function create(req, res, next) {
     const imageUrl = uploadedImageUrl || imagemUrl || imagem_url;
     const drawDate = dataSorteio ?? data_sorteio;
     const parsedMetadata = parseJsonField(metadata, {});
-    const normalizedQuotaValue = parsePositiveNumber(quotaValue, 'valor_cota');
+    const campaignType = cleanString(tipo_campanha || parsedMetadata.tipo_campanha) === 'gratuita'
+      ? 'gratuita'
+      : 'paga';
+    const freeCampaign = campaignType === 'gratuita';
+    const normalizedQuotaValue = freeCampaign ? 0 : parsePositiveNumber(quotaValue, 'valor_cota');
     const normalizedQuotaTotal = parsePositiveInteger(quotaTotal, 'total_cotas');
-    const minCotasPorPedido = parsePositiveInteger(parsedMetadata.min_cotas_por_pedido || 1, 'min_cotas_por_pedido');
-    const maxCotasPorPedido = parsePositiveInteger(parsedMetadata.max_cotas_por_pedido || normalizedQuotaTotal, 'max_cotas_por_pedido');
-    const minCotasByValue = Math.ceil(MIN_ORDER_VALUE / normalizedQuotaValue);
+    const minCotasPorPedido = freeCampaign ? 1 : parsePositiveInteger(parsedMetadata.min_cotas_por_pedido || 1, 'min_cotas_por_pedido');
+    const maxCotasPorPedido = freeCampaign ? 1 : parsePositiveInteger(parsedMetadata.max_cotas_por_pedido || normalizedQuotaTotal, 'max_cotas_por_pedido');
+    const minCotasByValue = freeCampaign ? 1 : Math.ceil(MIN_ORDER_VALUE / normalizedQuotaValue);
     const reservaExpiraMinutos = parsePositiveInteger(parsedMetadata.reserva_expira_minutos || 15, 'reserva_expira_minutos');
     const premioPrincipal = cleanString(parsedMetadata.premio_principal);
     const campaignDescription = cleanString(descricao);
     const campaignRules = cleanString(regulamento);
 
-    await ensureAdminHasPaymentGateway(req.admin_id);
+    if (!freeCampaign) {
+      await ensureAdminHasPaymentGateway(req.admin_id);
+    }
 
     if (!titulo || String(titulo).trim().length < 3) {
       throw new HttpError(422, 'titulo precisa ter pelo menos 3 caracteres.');
@@ -469,18 +476,22 @@ async function create(req, res, next) {
       ownerId = mirrorOwner.id;
     }
 
-    if (!ownerId || !titulo || !quotaValue || !quotaTotal) {
+    if (!ownerId || !titulo || quotaValue === undefined || quotaValue === null || !quotaTotal) {
       throw new HttpError(422, 'usuarioClienteId, titulo, valorCota e totalCotas sao obrigatorios.');
     }
 
     const campaignMetadata = {
       ...parsedMetadata,
+      tipo_campanha: campaignType,
+      sem_fins_lucrativos: freeCampaign,
       premio_principal: premioPrincipal,
       reserva_expira_minutos: reservaExpiraMinutos,
       min_cotas_por_pedido: minCotasPorPedido,
       max_cotas_por_pedido: maxCotasPorPedido,
-      valor_minimo_compra: MIN_ORDER_VALUE,
-      instrucoes_pagamento: cleanString(parsedMetadata.instrucoes_pagamento),
+      valor_minimo_compra: freeCampaign ? 0 : MIN_ORDER_VALUE,
+      instrucoes_pagamento: freeCampaign
+        ? (cleanString(parsedMetadata.instrucoes_pagamento) || 'Campanha gratuita e sem fins lucrativos. Informe seus dados para garantir uma cota sem pagamento.')
+        : cleanString(parsedMetadata.instrucoes_pagamento),
     };
 
     const campanha = await createCampaignWithUniqueSlug({

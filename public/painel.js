@@ -12,6 +12,12 @@ const searchInput = document.querySelector('#campaignSearch');
 const template = document.querySelector('#campaignCardTemplate');
 const campaignModal = document.querySelector('#campaignModal');
 const campaignForm = document.querySelector('#campaignForm');
+const campaignType = document.querySelector('#campaignType');
+const campaignTypeHelp = document.querySelector('#campaignTypeHelp');
+const campaignQuotaValue = document.querySelector('#campaignQuotaValue');
+const campaignQuotaValueHelp = document.querySelector('#campaignQuotaValueHelp');
+const campaignMinQuota = document.querySelector('[name="min_cotas_por_pedido"]');
+const campaignMaxQuota = document.querySelector('[name="max_cotas_por_pedido"]');
 const statActiveCampaigns = document.querySelector('#statActiveCampaigns');
 const statOrdersToday = document.querySelector('#statOrdersToday');
 const statPendingRevenue = document.querySelector('#statPendingRevenue');
@@ -69,6 +75,10 @@ let selectedDisclosureCampaign = null;
 let selectedDisclosureStatus = null;
 let pendingConfirmAction = null;
 let gatewayConnected = false;
+
+function isFreeCampaignForm() {
+  return campaignType?.value === 'gratuita';
+}
 
 function getAdminToken() {
   return localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
@@ -140,7 +150,40 @@ function updateCampaignCreateAvailability() {
   openButton.classList.toggle('opacity-60', !gatewayConnected);
   openButton.title = gatewayConnected
     ? 'Criar rifa'
-    : 'Complete o cadastro de recebimento antes de criar rifas.';
+    : 'Rifas pagas exigem recebimento ativo. Sorteios gratuitos podem ser criados sem Pix.';
+}
+
+function updateCampaignTypeUi() {
+  const free = isFreeCampaignForm();
+
+  if (campaignQuotaValue) {
+    campaignQuotaValue.readOnly = free;
+    if (free) {
+      campaignQuotaValue.value = '0';
+    } else if (Number(campaignQuotaValue.value || 0) === 0) {
+      campaignQuotaValue.value = '';
+    }
+  }
+
+  if (campaignQuotaValueHelp) {
+    campaignQuotaValueHelp.textContent = free
+      ? 'Sorteio gratuito: o comprador nao paga para adquirir uma cota.'
+      : 'Preco unitario pago pelo comprador.';
+  }
+
+  [campaignMinQuota, campaignMaxQuota].forEach((input) => {
+    if (!input) return;
+    input.readOnly = free;
+    if (free) {
+      input.value = '1';
+    }
+  });
+
+  if (campaignTypeHelp) {
+    campaignTypeHelp.textContent = free
+      ? 'Campanha sem fins lucrativos. Nao gera Pix e confirma a cota automaticamente.'
+      : 'Rifas pagas exigem carteira de recebimento ativa para gerar Pix.';
+  }
 }
 
 function setPaymentButtonLabel(button, mark, label) {
@@ -1421,12 +1464,6 @@ function openCampaignModal() {
 }
 
 function requestOpenCampaignModal() {
-  if (!gatewayConnected) {
-    setActiveTab('perfil');
-    showProfileFeedback('Complete o cadastro de recebimento antes de criar uma rifa.', 'error');
-    return;
-  }
-
   openCampaignModal();
 }
 
@@ -1434,6 +1471,7 @@ function closeCampaignModal() {
   campaignModal.classList.add('hidden');
   campaignModal.classList.remove('flex');
   campaignForm.reset();
+  updateCampaignTypeUi();
 }
 
 async function createCampaignFromForm(event) {
@@ -1441,7 +1479,7 @@ async function createCampaignFromForm(event) {
   const formData = new FormData(campaignForm);
   const submitButton = campaignForm.querySelector('button[type="submit"]');
 
-  if (!gatewayConnected) {
+  if (!gatewayConnected && !isFreeCampaignForm()) {
     closeCampaignModal();
     setActiveTab('perfil');
     showProfileFeedback('Complete o cadastro de recebimento antes de criar uma rifa.', 'error');
@@ -1477,6 +1515,8 @@ async function createCampaignFromForm(event) {
   }
 
   formData.set('metadata', JSON.stringify({
+    tipo_campanha: formData.get('tipo_campanha'),
+    sem_fins_lucrativos: formData.get('tipo_campanha') === 'gratuita',
     premio_principal: formData.get('premio_principal'),
     reserva_expira_minutos: Number(formData.get('reserva_expira_minutos') || 15),
     min_cotas_por_pedido: minCotas,
@@ -1586,6 +1626,7 @@ confirmActionModal.addEventListener('click', (event) => {
   if (event.target.id === 'confirmActionModal') closeConfirmActionModal();
 });
 campaignForm.addEventListener('submit', createCampaignFromForm);
+if (campaignType) campaignType.addEventListener('change', updateCampaignTypeUi);
 if (refreshOrdersButton) refreshOrdersButton.addEventListener('click', loadOrders);
 if (buyersCampaignSelect) buyersCampaignSelect.addEventListener('change', fetchCompradoresStats);
 profileButton.addEventListener('click', () => setActiveTab('perfil'));
@@ -1605,5 +1646,6 @@ closeConfirmActionModalButton.addEventListener('click', closeConfirmActionModal)
 cancelConfirmActionButton.addEventListener('click', closeConfirmActionModal);
 confirmActionButton.addEventListener('click', runPendingConfirmAction);
 
+updateCampaignTypeUi();
 bootstrapPanel();
 lucide.createIcons();
