@@ -140,7 +140,7 @@ Cadastre essa URL no painel do Mercado Pago em Webhooks/Notificacoes de pagament
 
 O dono da rifa deve acessar `Painel > Perfil > Gateway de pagamento` e clicar em **Conectar Mercado Pago**. Ele autoriza sua aplicacao sem informar senha. Depois disso, os PIX daquela conta sao criados no Mercado Pago dele.
 
-Tambem e possivel usar **Asaas com subcontas e split**. Nesse modelo, a sua conta/CNPJ Asaas cria uma subconta para cada dono de rifa via API. O Asaas retorna `apiKey` e `walletId`; o sistema salva esses dados com seguranca e usa o `walletId` no split para repassar automaticamente a parte do dono em cada venda.
+Tambem e possivel usar **Asaas com subcontas e split**. Nesse modelo, a sua conta/CNPJ Asaas cria uma subconta para cada dono de rifa via API. O Asaas retorna `apiKey` e `walletId`; o sistema salva esses dados com seguranca e usa o `walletId` no split para repassar automaticamente 100% do valor da venda para a subconta do dono da rifa. A cobranca da plataforma deve ser feita por fora.
 
 ### `MERCADO_PAGO_CLIENT_ID`
 
@@ -209,10 +209,10 @@ ASAAS_PLATFORM_ENVIRONMENT="production"
 
 ### `ASAAS_DEFAULT_SPLIT_PERCENTUAL`
 
-Percentual liquido padrao repassado ao dono da rifa pela subconta Asaas criada no painel. A diferenca fica automaticamente na conta principal que emitiu a cobranca.
+Percentual liquido padrao repassado ao dono da rifa pela subconta Asaas criada no painel. No modelo atual, use `100` para repassar 100% da venda ao dono da rifa; a plataforma cobra seus valores por fora.
 
 ```env
-ASAAS_DEFAULT_SPLIT_PERCENTUAL="90"
+ASAAS_DEFAULT_SPLIT_PERCENTUAL="100"
 ```
 
 Com subcontas ativas, o painel tambem permite:

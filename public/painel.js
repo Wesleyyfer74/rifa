@@ -28,7 +28,6 @@ const mercadoPagoStatus = document.querySelector('#mercadoPagoStatus');
 const connectMercadoPagoButton = document.querySelector('#connectMercadoPagoButton');
 const disconnectMercadoPagoButton = document.querySelector('#disconnectMercadoPagoButton');
 const asaasStatus = document.querySelector('#asaasStatus');
-const asaasEnvironment = document.querySelector('#asaasEnvironment');
 const asaasCpfCnpj = document.querySelector('#asaasCpfCnpj');
 const asaasBirthDate = document.querySelector('#asaasBirthDate');
 const asaasIncomeValue = document.querySelector('#asaasIncomeValue');
@@ -129,7 +128,6 @@ function fillProfileForm(profile) {
   profileForm.elements.telefone_mensagens.value = profile?.telefone_mensagens || '';
   profileForm.elements.pix_tipo.value = profile?.pix_tipo || '';
   profileForm.elements.pix_chave.value = profile?.pix_chave || '';
-  if (asaasEnvironment) asaasEnvironment.value = profile?.asaas?.percentual_repasse || '';
   renderMercadoPagoStatus(profile?.mercado_pago);
   renderAsaasStatus(profile?.asaas);
   updateCampaignCreateAvailability();
@@ -391,7 +389,6 @@ async function connectAsaas() {
         address_number: asaasAddressNumber.value,
         province: asaasProvince.value,
         company_type: asaasCompanyType.value,
-        percentual_repasse: asaasEnvironment.value,
       }),
     });
     const payload = await response.json();

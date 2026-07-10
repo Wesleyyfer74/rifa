@@ -25,7 +25,7 @@ function hasDirectAccount(admin) {
 }
 
 function normalizeSplitPercentual(value) {
-  const fallback = Number(env.asaasDefaultSplitPercentual || 90);
+  const fallback = Number(env.asaasDefaultSplitPercentual || 100);
   const parsed = Number(value ?? fallback);
 
   if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 100) {
@@ -263,7 +263,7 @@ async function connect({ adminId, body }) {
     ...body,
     income_value: resolveIncomeValue(body.income_value || body.incomeValue),
   };
-  const splitPercentual = normalizeSplitPercentual(enrichedBody.percentual_repasse || enrichedBody.percentualRepasse);
+  const splitPercentual = normalizeSplitPercentual(100);
   const walletProfileData = buildWalletProfileData(enrichedBody);
 
   if (!isPlatformConfigured()) {

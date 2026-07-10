@@ -79,7 +79,7 @@ const env = {
   asaasWebhookToken: process.env.ASAAS_WEBHOOK_TOKEN,
   asaasPlatformApiKey: process.env.ASAAS_PLATFORM_API_KEY || process.env.ASAAS_API_KEY,
   asaasPlatformEnvironment: process.env.ASAAS_PLATFORM_ENVIRONMENT || process.env.ASAAS_ENVIRONMENT || 'production',
-  asaasDefaultSplitPercentual: process.env.ASAAS_DEFAULT_SPLIT_PERCENTUAL || '90',
+  asaasDefaultSplitPercentual: process.env.ASAAS_DEFAULT_SPLIT_PERCENTUAL || '100',
   paymentWebhookAllowedIps: parseAllowedOrigins(process.env.PAYMENT_WEBHOOK_ALLOWED_IPS),
 };
 
