@@ -54,11 +54,15 @@ a {
 }
 
 .campaign-brand {
-  color: #e7c779;
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: clamp(24px, 2.4vw, 34px);
-  font-weight: 800;
-  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.campaign-brand img {
+  display: block;
+  width: clamp(8.5rem, 12vw, 12rem);
+  height: auto;
+  object-fit: contain;
 }
 
 .campaign-header nav {
