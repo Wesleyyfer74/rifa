@@ -41,7 +41,7 @@ router.get('/campanhas/:id/verificar-disparo', campanhasController.verificarDisp
 router.post('/campanhas/:id/disparar-whatsapp', campanhasController.dispararWhatsapp);
 router.get('/campanhas/:id/compradores-stats', campanhasController.compradoresStats);
 router.patch('/campanhas/:id/finalizar', campanhasController.finalizarCampanha);
-router.put('/campanhas/:id', campanhasController.update);
+router.put('/campanhas/:id', uploadCampaignImage.single('imagem'), campanhasController.update);
 router.delete('/campanhas/:id', campanhasController.remove);
 router.get('/rifinhas', rifinhasController.list);
 router.post('/rifinhas', rifinhasController.create);

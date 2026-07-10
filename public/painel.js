@@ -12,6 +12,9 @@ const searchInput = document.querySelector('#campaignSearch');
 const template = document.querySelector('#campaignCardTemplate');
 const campaignModal = document.querySelector('#campaignModal');
 const campaignForm = document.querySelector('#campaignForm');
+const campaignModalEyebrow = document.querySelector('#campaignModalEyebrow');
+const campaignModalTitle = document.querySelector('#campaignModalTitle');
+const campaignSubmitButton = document.querySelector('#campaignSubmitButton');
 const campaignType = document.querySelector('#campaignType');
 const campaignTypeHelp = document.querySelector('#campaignTypeHelp');
 const campaignQuotaValue = document.querySelector('#campaignQuotaValue');
@@ -75,6 +78,7 @@ let selectedDisclosureCampaign = null;
 let selectedDisclosureStatus = null;
 let pendingConfirmAction = null;
 let gatewayConnected = false;
+let editingCampaignId = null;
 
 function isFreeCampaignForm() {
   return campaignType?.value === 'gratuita';
@@ -685,6 +689,14 @@ function mapApiCampaign(campaign) {
     slug: campaign.slug,
     publicUrl: `/rifa/${campaign.slug}`,
     status: campaign.status === 'ativo' ? 'Ativo' : 'Pausado',
+    rawStatus: campaign.status,
+    description: campaign.descricao || '',
+    rules: campaign.regulamento || '',
+    metadata: campaign.metadata && typeof campaign.metadata === 'object' ? campaign.metadata : {},
+    drawDate: campaign.dataSorteio || campaign.data_sorteio || '',
+    quotaValue: Number(campaign.valorCota ?? campaign.valor_cota ?? 0),
+    totalQuotas: Number(campaign.totalCotas ?? campaign.total_cotas ?? 0),
+    imageUrl: campaign.imagemUrl || campaign.imagem_url || '',
     image: campaign.imagemUrl || 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80',
     cotas: campaign.totalCotas || 0,
     price: formatMoney(campaign.valorCota),
@@ -1071,6 +1083,7 @@ function renderCampaigns(items) {
     node.querySelector('.campaign-cotas').textContent = campaign.cotas.toLocaleString('pt-BR');
     node.querySelector('.campaign-price').textContent = campaign.price;
     node.querySelector('.campaign-sold').textContent = campaign.sold;
+    node.querySelector('.edit-campaign').dataset.id = campaign.id;
     const hasOrders = Number(campaign.orders || 0) > 0;
     node.querySelector('.campaign-card .p-5').insertAdjacentHTML('beforeend', `
       <div class="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -1100,6 +1113,10 @@ function renderCampaigns(items) {
 
   campaignGrid.querySelectorAll('.open-disclosure').forEach((button) => {
     button.addEventListener('click', () => openCampaignDisclosure(button.dataset.id));
+  });
+
+  campaignGrid.querySelectorAll('.edit-campaign').forEach((button) => {
+    button.addEventListener('click', () => openEditCampaignModal(button.dataset.id));
   });
 
   campaignGrid.querySelectorAll('.delete-campaign').forEach((button) => {
@@ -1457,6 +1474,56 @@ function filterCampaigns(value) {
   }));
 }
 
+function formatDateTimeLocal(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return offsetDate.toISOString().slice(0, 16);
+}
+
+function setCampaignModalMode(mode, campaign = null) {
+  const editing = mode === 'edit';
+  editingCampaignId = editing ? campaign?.id : null;
+
+  if (campaignModalEyebrow) {
+    campaignModalEyebrow.textContent = editing ? 'Editar rifa' : 'Nova rifa';
+  }
+
+  if (campaignModalTitle) {
+    campaignModalTitle.textContent = editing ? 'Editar campanha' : 'Criar rifa';
+  }
+
+  if (campaignSubmitButton) {
+    campaignSubmitButton.textContent = editing ? 'Salvar alterações' : 'Salvar campanha';
+  }
+
+  const imageInput = campaignForm.elements.imagem;
+  if (imageInput) {
+    imageInput.required = !editing;
+  }
+}
+
+function fillCampaignForm(campaign) {
+  const metadata = campaign.metadata || {};
+
+  campaignForm.elements.titulo.value = campaign.title || '';
+  campaignForm.elements.premio_principal.value = metadata.premio_principal || '';
+  campaignForm.elements.data_sorteio.value = formatDateTimeLocal(campaign.drawDate);
+  campaignForm.elements.tipo_campanha.value = metadata.tipo_campanha === 'gratuita' ? 'gratuita' : 'paga';
+  campaignForm.elements.valor_cota.value = String(campaign.quotaValue || '');
+  campaignForm.elements.total_cotas.value = String(campaign.totalQuotas || '');
+  campaignForm.elements.reserva_expira_minutos.value = String(metadata.reserva_expira_minutos || 15);
+  campaignForm.elements.min_cotas_por_pedido.value = String(metadata.min_cotas_por_pedido || 1);
+  campaignForm.elements.max_cotas_por_pedido.value = String(metadata.max_cotas_por_pedido || 100);
+  campaignForm.elements.descricao.value = campaign.description || '';
+  campaignForm.elements.regulamento.value = campaign.rules || '';
+  campaignForm.elements.instrucoes_pagamento.value = metadata.instrucoes_pagamento || '';
+  campaignForm.elements.status.value = campaign.rawStatus || 'ativo';
+  updateCampaignTypeUi();
+}
+
 function openCampaignModal() {
   campaignModal.classList.remove('hidden');
   campaignModal.classList.add('flex');
@@ -1464,6 +1531,23 @@ function openCampaignModal() {
 }
 
 function requestOpenCampaignModal() {
+  campaignForm.reset();
+  setCampaignModalMode('create');
+  updateCampaignTypeUi();
+  openCampaignModal();
+}
+
+function openEditCampaignModal(campaignId) {
+  const campaign = campaigns.find((item) => item.id === campaignId);
+
+  if (!campaign) {
+    alert('Campanha nao encontrada no painel.');
+    return;
+  }
+
+  campaignForm.reset();
+  setCampaignModalMode('edit', campaign);
+  fillCampaignForm(campaign);
   openCampaignModal();
 }
 
@@ -1471,6 +1555,7 @@ function closeCampaignModal() {
   campaignModal.classList.add('hidden');
   campaignModal.classList.remove('flex');
   campaignForm.reset();
+  setCampaignModalMode('create');
   updateCampaignTypeUi();
 }
 
@@ -1478,6 +1563,7 @@ async function createCampaignFromForm(event) {
   event.preventDefault();
   const formData = new FormData(campaignForm);
   const submitButton = campaignForm.querySelector('button[type="submit"]');
+  const isEditing = Boolean(editingCampaignId);
 
   if (!gatewayConnected && !isFreeCampaignForm()) {
     closeCampaignModal();
@@ -1525,8 +1611,8 @@ async function createCampaignFromForm(event) {
   }));
 
   try {
-    const response = await fetch('/api/v1/admin/campanhas', {
-      method: 'POST',
+    const response = await fetch(isEditing ? `/api/v1/admin/campanhas/${editingCampaignId}` : '/api/v1/admin/campanhas', {
+      method: isEditing ? 'PUT' : 'POST',
       headers: authHeaders(),
       body: formData,
     });
@@ -1534,7 +1620,7 @@ async function createCampaignFromForm(event) {
     const payload = await response.json();
 
     if (!response.ok) {
-      throw new Error(payload.error?.message || 'Nao foi possivel criar campanha.');
+      throw new Error(payload.error?.message || (isEditing ? 'Nao foi possivel editar campanha.' : 'Nao foi possivel criar campanha.'));
     }
 
     closeCampaignModal();
@@ -1544,7 +1630,7 @@ async function createCampaignFromForm(event) {
   } finally {
     if (submitButton) {
       submitButton.disabled = false;
-      submitButton.textContent = 'Salvar campanha';
+      submitButton.textContent = isEditing ? 'Salvar alterações' : 'Salvar campanha';
     }
   }
 }

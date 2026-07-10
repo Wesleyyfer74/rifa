@@ -528,12 +528,12 @@ async function create(req, res, next) {
 async function update(req, res, next) {
   try {
     const data = {};
+    const uploadedImageUrl = req.file ? `/uploads/campanhas/${req.file.filename}` : null;
     const allowedFields = [
       'titulo',
       'descricao',
       'regulamento',
       'status',
-      'metadata',
     ];
 
     allowedFields.forEach((field) => {
@@ -546,15 +546,21 @@ async function update(req, res, next) {
       data.slug = req.body.slug || slugify(req.body.titulo || '');
     }
 
+    if (req.body.metadata !== undefined) {
+      data.metadata = parseJsonField(req.body.metadata, {});
+    }
+
     if (req.body.valorCota !== undefined || req.body.valor_cota !== undefined) {
-      data.valorCota = req.body.valorCota ?? req.body.valor_cota;
+      data.valorCota = Number(req.body.valorCota ?? req.body.valor_cota);
     }
 
     if (req.body.totalCotas !== undefined || req.body.total_cotas !== undefined) {
-      data.totalCotas = req.body.totalCotas ?? req.body.total_cotas;
+      data.totalCotas = Number(req.body.totalCotas ?? req.body.total_cotas);
     }
 
-    if (req.body.imagemUrl !== undefined || req.body.imagem_url !== undefined) {
+    if (uploadedImageUrl) {
+      data.imagemUrl = uploadedImageUrl;
+    } else if (req.body.imagemUrl !== undefined || req.body.imagem_url !== undefined) {
       data.imagemUrl = req.body.imagemUrl ?? req.body.imagem_url;
     }
 

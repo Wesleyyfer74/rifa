@@ -282,7 +282,7 @@
             <h2 class="campaign-title truncate text-lg font-extrabold text-gold-50"></h2>
             <p class="campaign-slug mt-1 truncate text-sm font-semibold text-panel-muted"></p>
           </div>
-          <button class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-panel-line text-panel-muted hover:text-gold-300" type="button" aria-label="Editar campanha">
+          <button class="edit-campaign grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-panel-line text-panel-muted hover:text-gold-300" type="button" aria-label="Editar campanha">
             <i data-lucide="more-horizontal" class="h-5 w-5"></i>
           </button>
         </div>
@@ -308,8 +308,8 @@
     <div class="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-panel-line bg-panel-card shadow-dark">
       <div class="flex shrink-0 items-center justify-between border-b border-panel-line p-5">
         <div>
-          <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Nova rifa</p>
-          <h2 class="mt-1 text-2xl font-extrabold text-gold-50">Criar rifa</h2>
+          <p id="campaignModalEyebrow" class="text-xs font-extrabold uppercase tracking-[0.24em] text-gold-300">Nova rifa</p>
+          <h2 id="campaignModalTitle" class="mt-1 text-2xl font-extrabold text-gold-50">Criar rifa</h2>
         </div>
         <button id="closeCampaignModal" class="grid h-11 w-11 place-items-center rounded-2xl border border-panel-line text-panel-muted hover:text-gold-300" type="button" aria-label="Fechar modal">
           <i data-lucide="x" class="h-5 w-5"></i>
@@ -435,7 +435,7 @@
 
         <div class="flex shrink-0 flex-col-reverse gap-3 border-t border-panel-line bg-panel-card p-5 sm:flex-row sm:justify-end">
           <button id="cancelCampaignModal" class="h-12 rounded-2xl border border-panel-line px-5 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button">Cancelar</button>
-          <button class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Salvar campanha</button>
+          <button id="campaignSubmitButton" class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Salvar campanha</button>
         </div>
       </form>
     </div>
