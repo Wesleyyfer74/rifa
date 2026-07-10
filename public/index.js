@@ -61,12 +61,8 @@ function renderCampaignCard(campaign) {
 
 function renderEmptyState() {
   carousel.innerHTML = `
-    <article class="empty-card">
-      <div>
-        <strong>Nenhuma rifa ativa no momento.</strong>
-        <p>Entre como rifeiro para criar a primeira campanha e publicar sua pagina de venda.</p>
-        <a class="primary-button" href="/login">Criar uma rifa</a>
-      </div>
+    <article class="empty-card empty-card-simple">
+      <strong>Nenhuma rifa ativa no momento.</strong>
     </article>
   `;
 }

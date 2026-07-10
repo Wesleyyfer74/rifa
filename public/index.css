@@ -443,6 +443,11 @@ h2 {
   text-align: center;
 }
 
+.empty-card-simple {
+  min-height: 10rem;
+  box-shadow: none;
+}
+
 .raffle-card-image {
   position: relative;
   height: 13rem;
