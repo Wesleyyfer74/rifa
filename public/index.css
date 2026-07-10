@@ -44,7 +44,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  width: min(1180px, calc(100% - 2rem));
+  width: min(1480px, calc(100% - 3rem));
   margin: 0 auto;
   padding: 1rem 0;
   backdrop-filter: blur(18px);
@@ -134,17 +134,17 @@ a {
 .section,
 .cta-section,
 .site-footer {
-  width: min(1180px, calc(100% - 2rem));
+  width: min(1480px, calc(100% - 3rem));
   margin-inline: auto;
 }
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.72fr);
-  gap: 3rem;
+  grid-template-columns: minmax(660px, 1.18fr) minmax(360px, 0.62fr);
+  gap: clamp(3rem, 6vw, 7rem);
   align-items: center;
   min-height: calc(100vh - 5rem);
-  padding: 4rem 0 5rem;
+  padding: 4.5rem 0 5.5rem;
 }
 
 .eyebrow {
@@ -164,9 +164,9 @@ p {
 }
 
 h1 {
-  max-width: 780px;
+  max-width: 980px;
   margin-bottom: 1.25rem;
-  font-size: clamp(3rem, 7vw, 6.35rem);
+  font-size: clamp(4rem, 6vw, 7rem);
   font-weight: 900;
   line-height: 0.95;
 }
@@ -189,7 +189,7 @@ h2 {
 }
 
 .hero-text {
-  max-width: 680px;
+  max-width: 820px;
   font-size: 1.15rem;
 }
 
@@ -254,6 +254,8 @@ h2 {
   overflow: hidden;
   border-radius: 2rem;
   padding: 1rem;
+  width: min(100%, 520px);
+  justify-self: end;
 }
 
 .hero-panel::before {
@@ -594,6 +596,11 @@ h2 {
     padding-top: 2.5rem;
   }
 
+  .hero-panel {
+    width: 100%;
+    justify-self: stretch;
+  }
+
   .steps-grid {
     grid-template-columns: 1fr;
   }
@@ -607,7 +614,7 @@ h2 {
 
 @media (max-width: 640px) {
   .site-header {
-    width: min(100% - 1rem, 1180px);
+    width: min(100% - 1rem, 1480px);
   }
 
   .brand small {
