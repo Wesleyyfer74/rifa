@@ -1,5 +1,6 @@
 const state = {
   campaign: null,
+  paymentStatusTimer: null,
 };
 
 const MIN_ORDER_VALUE = 5;
@@ -233,6 +234,51 @@ function renderOrderResult(html, type = 'success') {
   els.result.innerHTML = html;
 }
 
+function stopPaymentStatusPolling() {
+  if (state.paymentStatusTimer) {
+    clearInterval(state.paymentStatusTimer);
+    state.paymentStatusTimer = null;
+  }
+}
+
+function renderPaymentConfirmed(data) {
+  renderOrderResult(`
+    <strong>Pagamento confirmado com sucesso.</strong><br>
+    Pedido: ${escapeHtml(data.id)}<br>
+    Quantidade de cotas: ${Number(data.quantidade_cotas || 0).toLocaleString('pt-BR')}<br>
+    Total: ${formatMoney(data.valor_total)}<br>
+    <span class="payment-warning">Suas cotas foram confirmadas automaticamente.</span>
+  `);
+}
+
+function startPaymentStatusPolling(pedidoId) {
+  stopPaymentStatusPolling();
+
+  let attempts = 0;
+  state.paymentStatusTimer = setInterval(async () => {
+    attempts += 1;
+
+    try {
+      const response = await fetch(`/api/v1/pedidos/status/${pedidoId}`, {
+        headers: { Accept: 'application/json' },
+      });
+      const payload = await response.json();
+
+      if (response.ok && payload.data?.pago) {
+        stopPaymentStatusPolling();
+        renderPaymentConfirmed(payload.data);
+        await loadCampaign();
+      }
+    } catch (error) {
+      // O webhook ainda e a fonte principal; o polling apenas reforca a confirmacao.
+    }
+
+    if (attempts >= 36) {
+      stopPaymentStatusPolling();
+    }
+  }, 5000);
+}
+
 async function copyPixPayload(payload, button) {
   try {
     await navigator.clipboard.writeText(payload);
@@ -325,6 +371,7 @@ async function submitOrder(event) {
     const copyPixButton = document.querySelector('#copyPixPayload');
     if (copyPixButton && result.data.pix_copia_cola) {
       copyPixButton.addEventListener('click', () => copyPixPayload(result.data.pix_copia_cola, copyPixButton));
+      startPaymentStatusPolling(result.data.id);
     }
 
     await loadCampaign();

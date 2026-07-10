@@ -157,6 +157,62 @@ async function findPedidoByGatewayPaymentId(gatewayPaymentId) {
   });
 }
 
+function isAsaasPaidStatus(status) {
+  return ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(String(status || '').toUpperCase());
+}
+
+async function syncPedidoPaymentStatus(pedido) {
+  if (!pedido || pedido.statusPagamento !== 'pendente') {
+    return pedido;
+  }
+
+  if (pedido.gatewayProvider !== 'asaas' || !pedido.gatewayPaymentId) {
+    return pedido;
+  }
+
+  const adminId = pedido.campanha?.administradorId;
+  if (!adminId) {
+    return pedido;
+  }
+
+  const credentials = await asaasService.getAdminCredentials(adminId);
+  const payment = await asaasProvider.getPayment(pedido.gatewayPaymentId, credentials);
+
+  if (isAsaasPaidStatus(payment.status)) {
+    const paidPedido = await markPedidoAsPaid({
+      gatewayPaymentId: String(payment.id),
+      gatewayPayload: {
+        source: 'status_sync',
+        payment,
+      },
+    });
+
+    await notifyPaymentConfirmed(paidPedido);
+    return paidPedido;
+  }
+
+  return prisma.pedido.update({
+    where: { id: pedido.id },
+    data: {
+      gatewayPayload: {
+        ...(pedido.gatewayPayload && typeof pedido.gatewayPayload === 'object' ? pedido.gatewayPayload : {}),
+        lastStatusSync: {
+          checkedAt: new Date().toISOString(),
+          status: payment.status || null,
+          payment,
+        },
+      },
+    },
+    include: {
+      campanha: true,
+      rifinha: true,
+      cotas: {
+        orderBy: { numero: 'asc' },
+      },
+    },
+  });
+}
+
 async function handleWebhook(req) {
   ensureAllowedIp(req);
 
@@ -214,7 +270,7 @@ async function handleAsaasWebhook(req) {
   const event = String(req.body.event || '');
   const payment = req.body.payment || {};
 
-  if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+  if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED' || isAsaasPaidStatus(payment.status)) {
     const pedido = await markPedidoAsPaid({
       gatewayPaymentId: String(payment.id),
       gatewayPayload: req.body,
@@ -251,4 +307,5 @@ module.exports = {
   generatePixForPedido,
   handleWebhook,
   notifyPaymentConfirmed,
+  syncPedidoPaymentStatus,
 };

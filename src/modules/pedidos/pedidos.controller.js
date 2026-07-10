@@ -81,10 +81,18 @@ async function getById(req, res, next) {
 async function getStatus(req, res, next) {
   try {
     const params = parseOrThrow(pedidoStatusParams, req.params);
-    const pedido = await pedidosRepository.findById(params.pedido_id || params.id);
+    let pedido = await pedidosRepository.findById(params.pedido_id || params.id);
 
     if (!pedido) {
       throw new HttpError(404, 'Pedido nao encontrado.');
+    }
+
+    if (pedido.statusPagamento === 'pendente' && pedido.gatewayProvider === 'asaas') {
+      try {
+        pedido = await paymentsService.syncPedidoPaymentStatus(pedido);
+      } catch (error) {
+        console.warn(`[pedidos] Falha ao sincronizar status Asaas do pedido ${pedido.id}: ${error.message}`);
+      }
     }
 
     return res.json({

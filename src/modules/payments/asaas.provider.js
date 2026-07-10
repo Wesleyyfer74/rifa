@@ -90,6 +90,18 @@ async function createPixPayment(pedido, credentials) {
   };
 }
 
+async function getPayment(paymentId, credentials) {
+  if (!paymentId) {
+    throw new HttpError(422, 'ID do pagamento Asaas nao informado.');
+  }
+
+  return asaasService.requestAsaas({
+    ...credentials,
+    path: `/payments/${encodeURIComponent(paymentId)}`,
+  });
+}
+
 module.exports = {
   createPixPayment,
+  getPayment,
 };
