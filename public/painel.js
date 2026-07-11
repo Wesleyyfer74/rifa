@@ -1206,11 +1206,12 @@ function renderCampaigns(items) {
     node.querySelector('.edit-campaign').dataset.id = campaign.id;
     const hasOrders = Number(campaign.orders || 0) > 0;
     node.querySelector('.campaign-card .p-5').insertAdjacentHTML('beforeend', `
-      <div class="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div class="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-5">
         <a class="inline-flex h-11 items-center justify-center rounded-2xl border border-gold-500/40 bg-gold-500/10 px-4 text-sm font-extrabold text-gold-300 hover:bg-gold-500/20" href="${campaign.publicUrl}" target="_blank" rel="noreferrer">Abrir pagina</a>
         <button class="copy-campaign-link inline-flex h-11 items-center justify-center rounded-2xl border border-panel-line px-4 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button" data-url="${campaign.publicUrl}">Copiar link</button>
         <button class="open-disclosure inline-flex h-11 items-center justify-center rounded-2xl border border-panel-line px-4 text-sm font-extrabold text-panel-muted hover:text-gold-50" type="button" data-id="${campaign.id}">Divulgar</button>
-        <button class="${hasOrders ? 'finish-campaign border-gold-500/30 bg-gold-500/10 text-gold-300 hover:bg-gold-500/20' : 'delete-campaign border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20'} inline-flex h-11 items-center justify-center rounded-2xl border px-4 text-sm font-extrabold" type="button" data-id="${campaign.id}" data-title="${escapeHtml(campaign.title)}">${hasOrders ? 'Finalizar' : 'Excluir'}</button>
+        ${hasOrders ? `<button class="finish-campaign inline-flex h-11 items-center justify-center rounded-2xl border border-gold-500/30 bg-gold-500/10 px-4 text-sm font-extrabold text-gold-300 hover:bg-gold-500/20" type="button" data-id="${campaign.id}" data-title="${escapeHtml(campaign.title)}">Finalizar</button>` : ''}
+        <button class="delete-campaign inline-flex h-11 items-center justify-center rounded-2xl border border-red-500/30 bg-red-500/10 px-4 text-sm font-extrabold text-red-300 hover:bg-red-500/20" type="button" data-id="${campaign.id}" data-title="${escapeHtml(campaign.title)}">Excluir</button>
       </div>
     `);
     campaignGrid.appendChild(node);
