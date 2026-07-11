@@ -11,6 +11,7 @@ const {
   enqueueCampaignRemarketing,
 } = require('./whatsapp-remarketing.service');
 const { HttpError } = require('../../utils/http-error');
+const { fileToDataUrl } = require('../../middlewares/upload-campaign-image');
 const { slugify } = require('../../utils/slugify');
 const {
   getCampanhaBySlugParams,
@@ -394,7 +395,7 @@ async function create(req, res, next) {
     let ownerId = usuarioClienteId || usuario_id;
     const quotaValue = valorCota ?? valor_cota;
     const quotaTotal = totalCotas ?? total_cotas;
-    const uploadedImageUrl = req.file ? `/uploads/campanhas/${req.file.filename}` : null;
+    const uploadedImageUrl = fileToDataUrl(req.file);
     const imageUrl = uploadedImageUrl || imagemUrl || imagem_url;
     const drawDate = dataSorteio ?? data_sorteio;
     const parsedMetadata = parseJsonField(metadata, {});
@@ -528,7 +529,7 @@ async function create(req, res, next) {
 async function update(req, res, next) {
   try {
     const data = {};
-    const uploadedImageUrl = req.file ? `/uploads/campanhas/${req.file.filename}` : null;
+    const uploadedImageUrl = fileToDataUrl(req.file);
     const allowedFields = [
       'titulo',
       'descricao',
