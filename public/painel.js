@@ -382,10 +382,19 @@ async function connectMercadoPago() {
 async function disconnectMercadoPago() {
   if (!disconnectMercadoPagoButton) return;
 
-  if (!window.confirm('Desconectar Mercado Pago? Novas vendas nao vao gerar Pix por essa conta ate conectar novamente.')) {
-    return;
-  }
+  openConfirmActionModal({
+    eyebrow: 'Desconectar gateway',
+    title: 'Desconectar Mercado Pago?',
+    message: 'Novas vendas nao vao gerar Pix por essa conta ate conectar novamente.',
+    warning: 'Confirme apenas se voce tem certeza que deseja remover essa conexao.',
+    confirmText: 'Desconectar',
+    loadingText: 'Desconectando...',
+    danger: true,
+    onConfirm: performDisconnectMercadoPago,
+  });
+}
 
+async function performDisconnectMercadoPago() {
   try {
     const response = await fetch('/api/v1/admin/gateways/mercado-pago', {
       method: 'DELETE',
@@ -463,10 +472,19 @@ async function connectAsaas() {
 async function disconnectAsaas() {
   if (!disconnectAsaasButton) return;
 
-  if (!window.confirm('Desativar recebimento? Novas vendas e saques ficarao bloqueados ate ativar novamente.')) {
-    return;
-  }
+  openConfirmActionModal({
+    eyebrow: 'Desativar recebimento',
+    title: 'Desativar carteira Asaas?',
+    message: 'Novas vendas e saques ficarao bloqueados ate ativar novamente.',
+    warning: 'Use apenas se precisar interromper o recebimento Pix deste cliente.',
+    confirmText: 'Desativar recebimento',
+    loadingText: 'Desativando...',
+    danger: true,
+    onConfirm: performDisconnectAsaas,
+  });
+}
 
+async function performDisconnectAsaas() {
   try {
     const response = await fetch('/api/v1/admin/gateways/asaas', {
       method: 'DELETE',
@@ -1039,6 +1057,20 @@ function openConfirmActionModal(config) {
   confirmActionModal.classList.add('flex');
 }
 
+function openInfoModal({ eyebrow = 'Aviso', title = 'Atencao', message = '', warning = '' } = {}) {
+  pendingConfirmAction = null;
+  confirmActionEyebrow.textContent = eyebrow;
+  confirmActionTitle.textContent = title;
+  confirmActionMessage.textContent = message;
+  confirmActionWarning.textContent = warning || message;
+  confirmActionWarning.className = 'm-6 rounded-3xl border border-gold-500/30 bg-gold-500/10 p-5 text-sm font-bold leading-relaxed text-gold-100';
+  confirmActionButton.textContent = 'Entendi';
+  confirmActionButton.className = 'h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300';
+  confirmActionButton.disabled = false;
+  confirmActionModal.classList.remove('hidden');
+  confirmActionModal.classList.add('flex');
+}
+
 function closeConfirmActionModal() {
   pendingConfirmAction = null;
   confirmActionModal.classList.add('hidden');
@@ -1047,7 +1079,10 @@ function closeConfirmActionModal() {
 }
 
 async function runPendingConfirmAction() {
-  if (!pendingConfirmAction?.onConfirm) return;
+  if (!pendingConfirmAction?.onConfirm) {
+    closeConfirmActionModal();
+    return;
+  }
 
   const action = pendingConfirmAction;
 
@@ -1059,7 +1094,8 @@ async function runPendingConfirmAction() {
   } catch (error) {
     confirmActionButton.disabled = false;
     confirmActionButton.textContent = action.confirmText || 'Confirmar';
-    alert(error.message);
+    confirmActionWarning.className = 'm-6 rounded-3xl border border-red-500/30 bg-red-500/10 p-5 text-sm font-bold leading-relaxed text-red-200';
+    confirmActionWarning.textContent = error.message;
   }
 }
 
@@ -1663,7 +1699,10 @@ function openEditCampaignModal(campaignId) {
   const campaign = campaigns.find((item) => item.id === campaignId);
 
   if (!campaign) {
-    alert('Campanha nao encontrada no painel.');
+    openInfoModal({
+      title: 'Campanha nao encontrada',
+      message: 'Atualize a lista de campanhas e tente novamente.',
+    });
     return;
   }
 
@@ -1695,7 +1734,10 @@ async function createCampaignFromForm(event) {
   }
 
   if (!getAdminToken()) {
-    alert('Faça login no painel antes de criar campanhas.');
+    openInfoModal({
+      title: 'Login necessario',
+      message: 'Faca login no painel antes de criar campanhas.',
+    });
     return;
   }
 
@@ -1708,12 +1750,18 @@ async function createCampaignFromForm(event) {
   }
 
   if (minCotas > maxCotas) {
-    alert('O minimo de cotas por pedido nao pode ser maior que o maximo.');
+    openInfoModal({
+      title: 'Revise as cotas',
+      message: 'O minimo de cotas por pedido nao pode ser maior que o maximo.',
+    });
     return;
   }
 
   if (maxCotas > totalCotas) {
-    alert('O maximo de cotas por pedido nao pode ser maior que o total de cotas da campanha.');
+    openInfoModal({
+      title: 'Revise as cotas',
+      message: 'O maximo de cotas por pedido nao pode ser maior que o total de cotas da campanha.',
+    });
     return;
   }
 
@@ -1748,7 +1796,11 @@ async function createCampaignFromForm(event) {
     closeCampaignModal();
     await fetchAdminCampanhas();
   } catch (error) {
-    alert(error.message);
+    openInfoModal({
+      eyebrow: 'Erro',
+      title: 'Nao foi possivel salvar',
+      message: error.message,
+    });
   } finally {
     if (submitButton) {
       submitButton.disabled = false;
