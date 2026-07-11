@@ -343,6 +343,34 @@ function parsePositiveInteger(value, fieldName) {
   return parsed;
 }
 
+function deriveQuotaFromFederalNumber(numeroFederal, totalCotas) {
+  const digits = String(numeroFederal || '').replace(/\D/g, '');
+
+  if (!digits) {
+    throw new HttpError(422, 'Informe o numero sorteado na Loteria Federal.');
+  }
+
+  const total = parsePositiveInteger(totalCotas, 'total_cotas');
+  const digitsToUse = Math.max(1, Math.ceil(Math.log10(total)));
+  const divisor = 10 ** digitsToUse;
+  const suffixRaw = Number(digits.slice(-digitsToUse));
+  const suffix = Number.isFinite(suffixRaw) ? suffixRaw : 0;
+  let numeroApurado = suffix === 0 ? divisor : suffix;
+  let criterio = `Usando os ${digitsToUse} ultimos digitos da Federal.`;
+
+  if (numeroApurado > total) {
+    numeroApurado %= total;
+    if (numeroApurado === 0) numeroApurado = total;
+    criterio = `Numero ajustado pelo total de cotas (${total}) usando resto da divisao.`;
+  }
+
+  return {
+    numeroFederal: digits,
+    numeroApurado,
+    criterio,
+  };
+}
+
 function cleanString(value) {
   const cleaned = String(value || '').trim();
   return cleaned === '' ? null : cleaned;
@@ -638,6 +666,82 @@ async function finalizarCampanha(req, res, next) {
   }
 }
 
+async function sortearCampanha(req, res, next) {
+  try {
+    const campanha = await campanhasRepository.findByIdForAdmin(req.params.id, req.admin_id);
+
+    if (!campanha) {
+      throw new HttpError(404, 'Campanha nao encontrada para este administrador.');
+    }
+
+    const { numeroFederal, numeroApurado, criterio } = deriveQuotaFromFederalNumber(
+      req.body.numero_federal || req.body.numeroFederal,
+      campanha.totalCotas,
+    );
+
+    const cota = await prisma.cotaCampanha.findUnique({
+      where: {
+        campanhaId_numero: {
+          campanhaId: campanha.id,
+          numero: numeroApurado,
+        },
+      },
+      include: {
+        pedido: {
+          select: {
+            id: true,
+            compradorNome: true,
+            compradorWhatsapp: true,
+            compradorEmail: true,
+            statusPagamento: true,
+            paidAt: true,
+          },
+        },
+      },
+    });
+
+    const ganhador = cota?.status === 'pago' && cota?.pedido?.statusPagamento === 'pago'
+      ? {
+          pedido_id: cota.pedido.id,
+          nome: cota.pedido.compradorNome,
+          whatsapp: cota.pedido.compradorWhatsapp,
+          email: cota.pedido.compradorEmail,
+          cota: numeroApurado,
+          pago_em: cota.pedido.paidAt,
+        }
+      : null;
+
+    const sorteio = {
+      numero_federal: numeroFederal,
+      numero_apurado: numeroApurado,
+      criterio,
+      data_sorteio: campanha.dataSorteio,
+      apurado_em: new Date().toISOString(),
+      status: ganhador ? 'ganhador_encontrado' : 'sem_ganhador_pago',
+      ganhador,
+    };
+
+    const updated = await campanhasRepository.update(campanha.id, {
+      status: 'sorteado',
+      metadata: {
+        ...(campanha.metadata && typeof campanha.metadata === 'object' ? campanha.metadata : {}),
+        sorteio,
+      },
+    });
+
+    return res.json({
+      data: {
+        campanha_id: updated.id,
+        titulo: updated.titulo,
+        status: updated.status,
+        sorteio,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   listPublic,
   getPublicBySlug,
@@ -651,5 +755,6 @@ module.exports = {
   create,
   update,
   remove,
+  sortearCampanha,
   finalizarCampanha,
 };

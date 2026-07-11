@@ -62,6 +62,10 @@
           <i data-lucide="users"></i>
           Compradores
         </button>
+        <button class="nav-item" type="button" data-tab="sorteio">
+          <i data-lucide="trophy"></i>
+          Sorteio
+        </button>
         <button class="nav-item" type="button" data-tab="historico">
           <i data-lucide="archive"></i>
           Historico
@@ -91,6 +95,7 @@
       <div class="flex gap-2 overflow-x-auto">
         <button class="mobile-nav-item active" type="button" data-tab="campanhas">Campanhas</button>
         <button class="mobile-nav-item" type="button" data-tab="compradores">Compradores</button>
+        <button class="mobile-nav-item" type="button" data-tab="sorteio">Sorteio</button>
         <button class="mobile-nav-item" type="button" data-tab="historico">Historico</button>
       </div>
     </div>
@@ -158,6 +163,44 @@
             <p class="mt-1 text-sm font-semibold text-panel-muted">Maiores compradores por cotas pagas.</p>
           </div>
           <div id="buyersRankingList" class="divide-y divide-panel-line"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="panel-screen hidden" data-screen="sorteio">
+      <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-wide text-gold-300">Sorteio</p>
+          <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-gold-50">Apurar ganhador pela Federal</h1>
+          <p class="mt-2 max-w-3xl text-sm font-medium text-panel-muted">No dia do sorteio, informe o numero da Loteria Federal. O sistema calcula a cota correspondente e procura o comprador com pagamento confirmado.</p>
+        </div>
+      </div>
+
+      <div class="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <form id="drawForm" class="rounded-3xl border border-panel-line bg-panel-card p-6 shadow-dark">
+          <div class="grid gap-5">
+            <label class="grid gap-2">
+              <span class="text-sm font-bold text-panel-muted">Campanha</span>
+              <select id="drawCampaignSelect" required class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10">
+                <option value="">Selecione uma campanha</option>
+              </select>
+            </label>
+
+            <label class="grid gap-2">
+              <span class="text-sm font-bold text-panel-muted">Numero sorteado na Federal</span>
+              <input id="drawFederalNumber" required inputmode="numeric" maxlength="12" class="h-12 rounded-2xl border border-panel-line bg-black/40 px-4 text-sm font-semibold text-gold-50 outline-none placeholder:text-panel-muted focus:border-gold-500 focus:ring-4 focus:ring-gold-500/10" placeholder="Ex: 43827">
+              <span class="text-xs font-semibold text-panel-muted">Para 1.000 cotas, usamos os 3 ultimos digitos. Se der 000, a cota apurada e 1000.</span>
+            </label>
+
+            <button id="drawSubmitButton" class="h-12 rounded-2xl bg-gold-500 px-5 text-sm font-extrabold text-black shadow-gold hover:bg-gold-300" type="submit">Buscar ganhador</button>
+          </div>
+        </form>
+
+        <section class="rounded-3xl border border-panel-line bg-panel-card p-6 shadow-dark">
+          <h2 class="text-lg font-extrabold text-gold-50">Resultado da apuracao</h2>
+          <div id="drawResult" class="mt-5 rounded-3xl border border-dashed border-gold-500/30 bg-black/30 p-6 text-sm font-bold leading-7 text-panel-muted">
+            Selecione uma campanha e informe o numero da Federal para apurar.
+          </div>
         </section>
       </div>
     </section>

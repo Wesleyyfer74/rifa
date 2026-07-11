@@ -22,6 +22,7 @@ async function index(req, res, next) {
           total_cotas: Number(campanha.total_cotas || 0),
           valor_cota: Number(campanha.valor_cota || 0),
           data_sorteio: campanha.data_sorteio,
+          sorteio: campanha.metadata?.sorteio || null,
           pedidos_pagos: Number(campanha.pedidos_pagos || 0),
           receita_total: Number(campanha.receita_total || 0),
           receita_total_formatada: formatMoney(campanha.receita_total),

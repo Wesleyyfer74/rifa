@@ -40,6 +40,7 @@ router.post('/campanhas', uploadCampaignImage.single('imagem'), campanhasControl
 router.get('/campanhas/:id/verificar-disparo', campanhasController.verificarDisparo);
 router.post('/campanhas/:id/disparar-whatsapp', campanhasController.dispararWhatsapp);
 router.get('/campanhas/:id/compradores-stats', campanhasController.compradoresStats);
+router.post('/campanhas/:id/sortear', campanhasController.sortearCampanha);
 router.patch('/campanhas/:id/finalizar', campanhasController.finalizarCampanha);
 router.put('/campanhas/:id', uploadCampaignImage.single('imagem'), campanhasController.update);
 router.delete('/campanhas/:id', campanhasController.remove);

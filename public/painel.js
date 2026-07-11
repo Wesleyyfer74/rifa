@@ -57,6 +57,11 @@ const requestAsaasWithdrawalButton = document.querySelector('#requestAsaasWithdr
 const buyersCampaignSelect = document.querySelector('#buyersCampaignSelect');
 const buyersRealtimeList = document.querySelector('#buyersRealtimeList');
 const buyersRankingList = document.querySelector('#buyersRankingList');
+const drawForm = document.querySelector('#drawForm');
+const drawCampaignSelect = document.querySelector('#drawCampaignSelect');
+const drawFederalNumber = document.querySelector('#drawFederalNumber');
+const drawResult = document.querySelector('#drawResult');
+const drawSubmitButton = document.querySelector('#drawSubmitButton');
 const historyCampaignsList = document.querySelector('#historyCampaignsList');
 const historyClientsList = document.querySelector('#historyClientsList');
 const disclosureModal = document.querySelector('#disclosureModal');
@@ -745,6 +750,102 @@ function renderBuyerCampaignOptions() {
   }
 }
 
+function renderDrawCampaignOptions() {
+  if (!drawCampaignSelect) return;
+
+  const selectedCampaignId = drawCampaignSelect.value;
+  drawCampaignSelect.innerHTML = '<option value="">Selecione uma campanha</option>';
+
+  campaigns.forEach((campaign) => {
+    const option = document.createElement('option');
+    option.value = campaign.id;
+    option.textContent = `${campaign.title} - ${campaign.cotas.toLocaleString('pt-BR')} cotas`;
+    drawCampaignSelect.appendChild(option);
+  });
+
+  if (campaigns.some((campaign) => campaign.id === selectedCampaignId)) {
+    drawCampaignSelect.value = selectedCampaignId;
+  }
+}
+
+function renderDrawResult(result) {
+  if (!drawResult) return;
+
+  const sorteio = result?.sorteio || {};
+  const winner = sorteio.ganhador;
+
+  if (winner) {
+    drawResult.className = 'mt-5 rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-sm font-bold leading-7 text-emerald-100';
+    drawResult.innerHTML = `
+      <p class="text-lg font-black text-emerald-300">Ganhador encontrado</p>
+      <p class="mt-3">Numero Federal: <strong>${escapeHtml(sorteio.numero_federal)}</strong></p>
+      <p>Cota apurada: <strong>${Number(sorteio.numero_apurado || 0).toLocaleString('pt-BR')}</strong></p>
+      <p>Nome: <strong>${escapeHtml(winner.nome)}</strong></p>
+      <p>WhatsApp: <strong>${escapeHtml(winner.whatsapp)}</strong></p>
+      <p>Pedido: <strong>${escapeHtml(winner.pedido_id)}</strong></p>
+      <p class="mt-3 text-emerald-200">${escapeHtml(sorteio.criterio)}</p>
+    `;
+    return;
+  }
+
+  drawResult.className = 'mt-5 rounded-3xl border border-amber-500/30 bg-amber-500/10 p-6 text-sm font-bold leading-7 text-amber-100';
+  drawResult.innerHTML = `
+    <p class="text-lg font-black text-amber-300">Nenhum ganhador pago encontrado</p>
+    <p class="mt-3">Numero Federal: <strong>${escapeHtml(sorteio.numero_federal)}</strong></p>
+    <p>Cota apurada: <strong>${Number(sorteio.numero_apurado || 0).toLocaleString('pt-BR')}</strong></p>
+    <p class="mt-3 text-amber-200">${escapeHtml(sorteio.criterio)}</p>
+    <p class="mt-3">Essa cota nao estava paga no momento da apuracao.</p>
+  `;
+}
+
+async function submitDrawForm(event) {
+  event.preventDefault();
+
+  const campaignId = drawCampaignSelect?.value;
+  const numeroFederal = drawFederalNumber?.value;
+
+  if (!campaignId || !numeroFederal) {
+    return;
+  }
+
+  drawSubmitButton.disabled = true;
+  drawSubmitButton.textContent = 'Apurando...';
+  drawResult.className = 'mt-5 rounded-3xl border border-panel-line bg-black/30 p-6 text-sm font-bold leading-7 text-panel-muted';
+  drawResult.textContent = 'Consultando cotas pagas e apurando resultado...';
+
+  try {
+    const response = await fetch(`/api/v1/admin/campanhas/${campaignId}/sortear`, {
+      method: 'POST',
+      headers: {
+        ...authHeaders(),
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        numero_federal: numeroFederal,
+      }),
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error?.message || 'Nao foi possivel apurar o sorteio.');
+    }
+
+    renderDrawResult(payload.data);
+    campaigns = campaigns.filter((campaign) => campaign.id !== campaignId);
+    renderCampaigns(campaigns);
+    renderBuyerCampaignOptions();
+    renderDrawCampaignOptions();
+    await fetchHistorico();
+  } catch (error) {
+    drawResult.className = 'mt-5 rounded-3xl border border-red-500/30 bg-red-500/10 p-6 text-sm font-bold leading-7 text-red-200';
+    drawResult.textContent = error.message;
+  } finally {
+    drawSubmitButton.disabled = false;
+    drawSubmitButton.textContent = 'Buscar ganhador';
+  }
+}
+
 function renderBuyerStats(data = {}) {
   const realtime = data.tempo_real || [];
   const ranking = data.ranking_baleias || [];
@@ -835,27 +936,38 @@ function renderHistorico(data = {}) {
   const campanhasAntigas = data.campanhas_antigas || [];
   const clientesAntigos = data.clientes_antigos || [];
 
-  historyCampaignsList.innerHTML = campanhasAntigas.length ? campanhasAntigas.map((campanha) => `
-    <article class="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
-      <div class="min-w-0">
-        <div class="flex flex-wrap items-center gap-3">
-          <h3 class="truncate text-base font-extrabold text-gold-50">${escapeHtml(campanha.titulo || 'Campanha')}</h3>
-          <span class="rounded-full bg-white/5 px-3 py-1 text-xs font-extrabold uppercase text-panel-muted ring-1 ring-white/10">${escapeHtml(campanha.status || 'finalizado')}</span>
+  historyCampaignsList.innerHTML = campanhasAntigas.length ? campanhasAntigas.map((campanha) => {
+    const sorteio = campanha.sorteio || null;
+    const winner = sorteio?.ganhador || null;
+
+    return `
+      <article class="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-3">
+            <h3 class="truncate text-base font-extrabold text-gold-50">${escapeHtml(campanha.titulo || 'Campanha')}</h3>
+            <span class="rounded-full bg-white/5 px-3 py-1 text-xs font-extrabold uppercase text-panel-muted ring-1 ring-white/10">${escapeHtml(campanha.status || 'finalizado')}</span>
+          </div>
+          <p class="mt-1 text-sm font-semibold text-panel-muted">/${escapeHtml(campanha.slug || '')}</p>
+          ${sorteio ? `
+            <div class="mt-3 rounded-2xl border border-gold-500/25 bg-gold-500/10 p-3 text-xs font-bold leading-5 text-gold-100">
+              Federal ${escapeHtml(sorteio.numero_federal)} -> cota ${Number(sorteio.numero_apurado || 0).toLocaleString('pt-BR')}
+              ${winner ? `<br>Ganhador: ${escapeHtml(winner.nome)} (${escapeHtml(winner.whatsapp)})` : '<br>Sem ganhador pago nessa cota.'}
+            </div>
+          ` : ''}
         </div>
-        <p class="mt-1 text-sm font-semibold text-panel-muted">/${escapeHtml(campanha.slug || '')}</p>
-      </div>
-      <div class="grid grid-cols-2 gap-3 text-right">
-        <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
-          <span class="block text-xs font-bold text-panel-muted">Receita</span>
-          <strong class="mt-1 block text-sm font-extrabold text-gold-100">${escapeHtml(campanha.receita_total_formatada || formatMoney(campanha.receita_total))}</strong>
+        <div class="grid grid-cols-2 gap-3 text-right">
+          <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
+            <span class="block text-xs font-bold text-panel-muted">Receita</span>
+            <strong class="mt-1 block text-sm font-extrabold text-gold-100">${escapeHtml(campanha.receita_total_formatada || formatMoney(campanha.receita_total))}</strong>
+          </div>
+          <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
+            <span class="block text-xs font-bold text-panel-muted">Cotas</span>
+            <strong class="mt-1 block text-sm font-extrabold text-gold-100">${Number(campanha.cotas_vendidas || 0).toLocaleString('pt-BR')}</strong>
+          </div>
         </div>
-        <div class="rounded-2xl bg-black/35 p-3 ring-1 ring-panel-line">
-          <span class="block text-xs font-bold text-panel-muted">Cotas</span>
-          <strong class="mt-1 block text-sm font-extrabold text-gold-100">${Number(campanha.cotas_vendidas || 0).toLocaleString('pt-BR')}</strong>
-        </div>
-      </div>
-    </article>
-  `).join('') : emptyList('Nenhuma campanha finalizada ainda.');
+      </article>
+    `;
+  }).join('') : emptyList('Nenhuma campanha finalizada ainda.');
 
   historyClientsList.innerHTML = clientesAntigos.length ? clientesAntigos.map((cliente) => `
     <article class="flex items-center justify-between gap-4 p-5">
@@ -1406,6 +1518,7 @@ async function fetchAdminCampanhas() {
 
   renderCampaigns(campaigns);
   renderBuyerCampaignOptions();
+  renderDrawCampaignOptions();
 }
 
 async function fetchAdminRifinhas() {
@@ -1723,6 +1836,7 @@ campaignForm.addEventListener('submit', createCampaignFromForm);
 if (campaignType) campaignType.addEventListener('change', updateCampaignTypeUi);
 if (refreshOrdersButton) refreshOrdersButton.addEventListener('click', loadOrders);
 if (buyersCampaignSelect) buyersCampaignSelect.addEventListener('change', fetchCompradoresStats);
+if (drawForm) drawForm.addEventListener('submit', submitDrawForm);
 profileButton.addEventListener('click', () => setActiveTab('perfil'));
 headerLogoutButton.addEventListener('click', clearSession);
 profileForm.addEventListener('submit', submitProfileForm);

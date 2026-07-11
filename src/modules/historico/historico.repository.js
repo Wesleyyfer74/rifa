@@ -12,6 +12,7 @@ async function getHistoricoByAdminId(adminId, client = prisma) {
         c.total_cotas,
         c.valor_cota,
         c.data_sorteio,
+        c.metadata,
         c.created_at,
         c.updated_at,
         COALESCE(COUNT(p.id) FILTER (WHERE p.status_pagamento::text = 'pago'), 0)::int AS pedidos_pagos,
