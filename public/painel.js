@@ -536,10 +536,18 @@ async function requestAsaasWithdrawal() {
     return;
   }
 
-  if (!window.confirm(`Confirmar saque de ${formatBRL(valor)} para a chave Pix informada?`)) {
-    return;
-  }
+  openConfirmActionModal({
+    eyebrow: 'Confirmar saque',
+    title: `Saque de ${formatBRL(valor)}`,
+    message: `Confirme o envio para a chave Pix informada: ${pixChave}`,
+    warning: 'Confira o tipo e a chave Pix antes de confirmar. Depois de solicitado, o saque sera enviado para processamento.',
+    confirmText: 'Confirmar saque',
+    loadingText: 'Solicitando saque...',
+    onConfirm: () => performAsaasWithdrawal({ valor, pixTipo, pixChave }),
+  });
+}
 
+async function performAsaasWithdrawal({ valor, pixTipo, pixChave }) {
   try {
     requestAsaasWithdrawalButton.disabled = true;
     requestAsaasWithdrawalButton.textContent = 'Solicitando saque...';
