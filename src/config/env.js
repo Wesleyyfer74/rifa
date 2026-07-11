@@ -76,7 +76,7 @@ const env = {
   mercadoPagoClientId: process.env.MERCADO_PAGO_CLIENT_ID,
   mercadoPagoClientSecret: process.env.MERCADO_PAGO_CLIENT_SECRET,
   mercadoPagoRedirectUri: process.env.MERCADO_PAGO_REDIRECT_URI,
-  asaasWebhookToken: process.env.ASAAS_WEBHOOK_TOKEN,
+  asaasWebhookToken: process.env.ASAAS_WEBHOOK_TOKEN?.trim(),
   asaasPlatformApiKey: process.env.ASAAS_PLATFORM_API_KEY || process.env.ASAAS_API_KEY,
   asaasPlatformEnvironment: process.env.ASAAS_PLATFORM_ENVIRONMENT || process.env.ASAAS_ENVIRONMENT || 'production',
   asaasDefaultSplitPercentual: process.env.ASAAS_DEFAULT_SPLIT_PERCENTUAL || '100',

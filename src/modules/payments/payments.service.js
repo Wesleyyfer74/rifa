@@ -258,9 +258,7 @@ async function handleWebhook(req) {
 
 async function handleAsaasWebhook(req) {
   if (env.asaasWebhookToken) {
-    const received = req.get('asaas-access-token')
-      || req.get('access_token')
-      || req.get('authorization')?.replace(/^Bearer\s+/i, '');
+    const received = req.get('asaas-access-token')?.trim();
 
     if (received !== env.asaasWebhookToken) {
       throw new HttpError(401, 'Webhook Asaas sem token valido.');
